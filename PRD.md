@@ -105,17 +105,19 @@ AI systems are increasingly vulnerable to prompt injection and adversarial attac
 | Feature/Module                | Status         | UI        | Backend/Service         | Dependencies/Notes                |
 |------------------------------|---------------|-----------|------------------------|-----------------------------------|
 | Attack Engine                 | ✅ Core implemented | ⚠️ Partial   | ✅ Yes                 | More provider support needed      |
-| AI Model API Integration      | ⚠️ In progress/stubbed | ⚠️ Partial   | ⚠️ Partial/stub        | Needs API keys, wiring            |
-| Red Team Campaigns            | ⚠️ UI + stub backend | ✅ Yes       | ⚠️ loadAIRedTeamAttacks() stub | Needs attack lib integration      |
-| MCP Testing                   | ❌ UI only     | ✅ Yes     | ❌ No                  | Needs backend logic               |
-| Agent Framework Testing       | ⚠️ UI + partial backend | ✅ Yes       | ⚠️ Simulated           | Needs deeper integration          |
-| Detection Engine (Semantic)   | ⚠️ Simulated/heuristic | ⚠️ Partial   | ⚠️ Simulated, not ML    | Needs ML/vector DB                |
+| AI Model API Integration      | ⚠️ In progress/stubbed | ⚠️ Partial   | ⚠️ Partial/stub        | OpenAI wired; Anthropic and Google Gemini present but not fully integrated; local model support present |
+| Red Team Campaigns            | ⚠️ UI + stub backend | ✅ Yes       | ⚠️ loadAIRedTeamAttacks() stub | UI and campaign builder exist; backend logic is stubbed      |
+| MCP Testing                   | ⚠️ UI only     | ✅ Yes     | ❌ No                  | UI present, backend logic not yet implemented               |
+| Agent Framework Testing       | ⚠️ UI + partial backend | ✅ Yes       | ⚠️ Simulated           | UI and some simulated backend logic; deeper integration planned          |
+| Detection Engine (Semantic)   | ⚠️ Simulated/heuristic | ⚠️ Partial   | ⚠️ Simulated, not ML    | Semantic Guardian and response analysis present as heuristics; ML/vector DB not yet implemented                |
 | Defense Engine                | ❌ Planned     | ❌ No      | ❌ No                  | Needs implementation              |
-| Benchmark Integration         | ⚠️ Simulated/stubbed | ✅ Yes       | ⚠️ Simulated, PDF stub  | Needs real data, PDF lib          |
+| Benchmark Integration         | ⚠️ Simulated/stubbed | ✅ Yes       | ⚠️ Simulated, PDF stub  | UI and simulated data; real data and PDF export are planned          |
 | Research Paper Reproduction   | ⚠️ Simulated   | ❌ No      | ⚠️ Simulated           | Needs real attack code            |
-| Adaptive Payloads             | ⚠️ Heuristic   | ⚠️ Partial | ⚠️ Heuristic only       | Needs ML/analytics                |
-| UI Wizards (Testing, RedTeam) | ⚠️ UI only/partial | ✅ Yes       | ⚠️ Partial/stub        | Needs backend wiring              |
-| MCP Server Management         | ❌ UI only     | ✅ Yes     | ❌ No                  | Needs backend logic               |
+| Adaptive Payloads             | ⚠️ Heuristic   | ⚠️ Partial | ⚠️ Heuristic only       | Some adaptive logic present, but not ML-driven                |
+| UI Wizards (Testing, RedTeam) | ⚠️ UI only/partial | ✅ Yes       | ⚠️ Partial/stub        | Wizards exist, but backend wiring is incomplete              |
+| MCP Server Management         | ⚠️ UI only     | ✅ Yes     | ❌ No                  | UI present, backend logic not yet implemented               |
+| Reporting Engine              | ⚠️ Partial     | ⚠️ Partial | ⚠️ Partial             | Some reporting features exist, but advanced analytics and export are not complete |
+| Evidence Collection           | ⚠️ Partial     | ⚠️ Partial | ⚠️ Partial             | Some evidence storage and display, but not full-featured     |
 
 **Legend:**
 - ✅ = Fully implemented

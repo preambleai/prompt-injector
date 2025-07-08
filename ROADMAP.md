@@ -24,10 +24,20 @@
 - Project structure and development environment
 
 ### 🚧 In Progress
-- AI model API integration (OpenAI, Anthropic, Google)
-- Advanced detection capabilities
-- Performance optimization
-- Test result visualization
+- **AI Model API Integration**: Partial/stubbed (OpenAI wired; Anthropic and Google Gemini present but not fully integrated; local model support present)
+- **Advanced Detection Capabilities**: Simulated/heuristic only (Semantic Guardian and response analysis present as heuristics; ML/vector DB not yet implemented)
+- **Performance Optimization**: Ongoing (core engine and UI optimized, but multi-model and advanced analytics are not)
+- **Test Result Visualization**: Partial (basic result display implemented; advanced analytics and reporting are partial)
+- **Red Team Campaigns**: UI + stub backend (UI and campaign builder exist; backend logic is stubbed)
+- **Agent Framework Testing**: UI + partial backend (UI and some simulated backend logic; deeper integration with frameworks planned)
+- **MCP Testing**: UI only (UI present, backend logic not yet implemented)
+- **Detection Engine (Semantic Guardian)**: Simulated/heuristic (not ML-based yet; vector DB and advanced detection are planned)
+- **Benchmark Integration**: Simulated/stubbed (UI and simulated data; real data and PDF export are planned)
+- **Adaptive Payloads**: Heuristic only (some adaptive logic present, but not ML-driven)
+- **UI Wizards (Testing, Red Team)**: UI only/partial (wizards exist, but backend wiring is incomplete)
+- **MCP Server Management**: UI only (UI present, backend logic not yet implemented)
+- **Reporting Engine**: Partial (some reporting features exist, but advanced analytics and export are not complete)
+- **Evidence Collection**: Partial (some evidence storage and display, but not full-featured)
 
 ### 📋 Next Milestones
 - Complete API integrations
