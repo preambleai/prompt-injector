@@ -1,0 +1,55 @@
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Build output
+dist/
+dist-electron/
+build/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+logs/
+*.log
+
+# Environment files
+.env*
+
+# Editor/IDE
+.vscode/
+.idea/
+*.sublime-workspace
+*.sublime-project
+
+# Test coverage
+coverage/
+
+# Electron
+*.asar
+
+# Misc
+*.tgz
+*.swp
+*.swo
+
+# TypeScript
+*.tsbuildinfo
+
+# Mac system files
+Icon?
+
+# Windows system files
+Desktop.ini
+
+# Output from package managers
+package-lock.json
+yarn.lock
+
+# Optional: Uncomment if you want to ignore local database files
+# *.sqlite
+# *.db 

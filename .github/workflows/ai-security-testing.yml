@@ -1,0 +1,294 @@
+name: AI Security Testing
+on:
+  pull_request:
+    branches: [main, develop]
+  push:
+    branches: [main, develop]
+  schedule:
+    - cron: '0 2 * * *'  # Daily at 2 AM
+  workflow_dispatch:  # Manual trigger
+
+env:
+  NODE_VERSION: '18'
+  PYTHON_VERSION: '3.11'
+
+jobs:
+  development-security-test:
+    name: Development Security Test
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request' || github.event_name == 'push'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          
+      - name: Install dependencies
+        run: |
+          npm ci
+          pip install -r requirements.txt || echo "No requirements.txt found"
+          
+      - name: Run Prompt Injection Tests
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
+          PROMPT_INJECTOR_API_KEY: ${{ secrets.PROMPT_INJECTOR_API_KEY }}
+        run: |
+          npm run test:security
+          
+      - name: Run AI Security Tests
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
+          PROMPT_INJECTOR_API_KEY: ${{ secrets.PROMPT_INJECTOR_API_KEY }}
+        run: |
+          npm run test:ai-security
+          
+      - name: Upload security results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: development-security-results
+          path: |
+            security-results.json
+            ai-security-results.json
+            *.log
+          retention-days: 30
+          
+      - name: Comment PR with results
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            let results = '## AI Security Test Results\n\n';
+            
+            try {
+              if (fs.existsSync('security-results.json')) {
+                const securityData = JSON.parse(fs.readFileSync('security-results.json', 'utf8'));
+                results += `### Prompt Injection Tests\n`;
+                results += `- **Total Tests**: ${securityData.totalTests || 0}\n`;
+                results += `- **Vulnerabilities Found**: ${securityData.vulnerabilitiesFound || 0}\n`;
+                results += `- **Critical Issues**: ${securityData.criticalIssues || 0}\n`;
+                results += `- **High Severity**: ${securityData.highSeverity || 0}\n\n`;
+              }
+              
+              if (fs.existsSync('ai-security-results.json')) {
+                const aiData = JSON.parse(fs.readFileSync('ai-security-results.json', 'utf8'));
+                results += `### AI Red Teaming Results\n`;
+                results += `- **Model Extraction Tests**: ${aiData.modelExtractionTests || 0}\n`;
+                results += `- **Adversarial Examples**: ${aiData.adversarialExamples || 0}\n`;
+                results += `- **Data Poisoning Tests**: ${aiData.dataPoisoningTests || 0}\n`;
+                results += `- **Overall Risk Score**: ${aiData.riskScore || 'N/A'}\n\n`;
+              }
+              
+              results += `[View detailed results](${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})`;
+              
+            } catch (error) {
+              results += '❌ Error processing test results\n';
+            }
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: results
+            });
+
+  staging-security-test:
+    name: Staging Security Validation
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/develop' && github.event_name == 'push'
+    needs: development-security-test
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          
+      - name: Install dependencies
+        run: |
+          npm ci
+          pip install -r requirements.txt || echo "No requirements.txt found"
+          
+      - name: Run Comprehensive Red Team Exercise
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
+          PROMPT_INJECTOR_API_KEY: ${{ secrets.PROMPT_INJECTOR_API_KEY }}
+        run: |
+          npm run test:red-teaming
+          
+      - name: Performance Impact Analysis
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
+          PROMPT_INJECTOR_API_KEY: ${{ secrets.PROMPT_INJECTOR_API_KEY }}
+        run: |
+          npm run test:performance
+          
+      - name: False Positive Analysis
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
+          PROMPT_INJECTOR_API_KEY: ${{ secrets.PROMPT_INJECTOR_API_KEY }}
+        run: |
+          npm run test:false-positives
+          
+      - name: Upload staging results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: staging-security-results
+          path: |
+            red-teaming-results.json
+            performance-results.json
+            false-positive-results.json
+            *.log
+          retention-days: 90
+
+  production-monitoring:
+    name: Production Security Monitoring
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    needs: [development-security-test, staging-security-test]
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          
+      - name: Install dependencies
+        run: |
+          npm ci
+          pip install -r requirements.txt || echo "No requirements.txt found"
+          
+      - name: Deploy to production
+        run: |
+          echo "Deploying to production..."
+          # Add your deployment commands here
+          
+      - name: Start Real-time Monitoring
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
+          PROMPT_INJECTOR_API_KEY: ${{ secrets.PROMPT_INJECTOR_API_KEY }}
+        run: |
+          npm run monitor:production
+          
+      - name: Setup Anomaly Detection
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
+          PROMPT_INJECTOR_API_KEY: ${{ secrets.PROMPT_INJECTOR_API_KEY }}
+        run: |
+          npm run setup:anomaly-detection
+          
+      - name: Configure Automated Response
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
+          PROMPT_INJECTOR_API_KEY: ${{ secrets.PROMPT_INJECTOR_API_KEY }}
+        run: |
+          npm run setup:automated-response
+
+  daily-security-scan:
+    name: Daily Security Scan
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          
+      - name: Install dependencies
+        run: |
+          npm ci
+          pip install -r requirements.txt || echo "No requirements.txt found"
+          
+      - name: Run Daily Security Scan
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
+          PROMPT_INJECTOR_API_KEY: ${{ secrets.PROMPT_INJECTOR_API_KEY }}
+        run: |
+          npm run scan:daily
+          
+      - name: Generate Security Report
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
+          PROMPT_INJECTOR_API_KEY: ${{ secrets.PROMPT_INJECTOR_API_KEY }}
+        run: |
+          npm run report:security
+          
+      - name: Send Security Report
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            
+            if (fs.existsSync('security-report.json')) {
+              const report = JSON.parse(fs.readFileSync('security-report.json', 'utf8'));
+              
+              // Send to Slack, email, or other notification systems
+              console.log('Security report generated:', report);
+              
+              // You can add webhook calls here to send to your notification system
+              // await fetch(process.env.SLACK_WEBHOOK_URL, {
+              //   method: 'POST',
+              //   headers: { 'Content-Type': 'application/json' },
+              //   body: JSON.stringify({ text: `Daily Security Report: ${report.summary}` })
+              // });
+            } 

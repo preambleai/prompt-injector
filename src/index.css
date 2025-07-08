@@ -1,0 +1,152 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    font-family: 'Inter', system-ui, sans-serif;
+    font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+    font-variation-settings: normal;
+  }
+  
+  body {
+    @apply bg-[#ECF0F6] text-[#081423];
+    font-feature-settings: 'rlig' 1, 'calt' 1;
+  }
+  
+  * {
+    @apply border-gray-200;
+  }
+
+  /* Preamble Brand Colors */
+  :root {
+    --preamble-gold: #FFC700;
+    --preamble-light-bg: #ECF0F6;
+    --preamble-dark: #081423;
+    --preamble-navy: #1F2C6D;
+    --preamble-blue: #4556E4;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply px-4 py-2 bg-[#4556E4] text-white rounded-lg hover:bg-[#1F2C6D] transition-all duration-200 font-medium shadow-sm hover:shadow-md;
+  }
+  
+  .btn-secondary {
+    @apply px-4 py-2 bg-[#ECF0F6] text-[#1F2C6D] rounded-lg hover:bg-white hover:text-[#4556E4] transition-all duration-200 font-medium border border-[#1F2C6D]/20;
+  }
+  
+  .btn-accent {
+    @apply px-4 py-2 bg-[#FFC700] text-[#081423] rounded-lg hover:bg-[#FFC700]/90 transition-all duration-200 font-medium shadow-sm hover:shadow-md;
+  }
+  
+  .btn-danger {
+    @apply px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium;
+  }
+  
+  .card {
+    @apply bg-white rounded-xl shadow-sm border border-gray-200/50 backdrop-blur-sm;
+  }
+  
+  .card-hover {
+    @apply bg-white rounded-xl shadow-sm border border-gray-200/50 hover:shadow-md hover:border-[#4556E4]/20 transition-all duration-200;
+  }
+  
+  .input-field {
+    @apply w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#4556E4] focus:border-[#4556E4] transition-all duration-200 bg-white;
+  }
+  
+  .badge {
+    @apply px-2 py-1 text-xs font-medium rounded-full;
+  }
+  
+  .badge-success {
+    @apply bg-green-100 text-green-800;
+  }
+  
+  .badge-warning {
+    @apply bg-[#FFC700]/20 text-[#081423];
+  }
+  
+  .badge-danger {
+    @apply bg-red-100 text-red-800;
+  }
+  
+  .badge-info {
+    @apply bg-[#4556E4]/10 text-[#1F2C6D];
+  }
+
+  .badge-preamble {
+    @apply bg-[#4556E4]/10 text-[#1F2C6D] border border-[#4556E4]/20;
+  }
+
+  /* Modern Typography */
+  .heading-1 {
+    @apply text-4xl font-bold text-[#081423] tracking-tight;
+  }
+
+  .heading-2 {
+    @apply text-2xl font-semibold text-[#081423] tracking-tight;
+  }
+
+  .heading-3 {
+    @apply text-xl font-medium text-[#081423] tracking-tight;
+  }
+
+  .body-text {
+    @apply text-[#1F2C6D] leading-relaxed;
+  }
+
+  .caption {
+    @apply text-sm text-[#1F2C6D]/70 font-medium tracking-wide uppercase;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+  
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Preamble specific utilities */
+  .text-preamble-dark {
+    @apply text-[#081423];
+  }
+
+  .text-preamble-navy {
+    @apply text-[#1F2C6D];
+  }
+
+  .text-preamble-blue {
+    @apply text-[#4556E4];
+  }
+
+  .text-preamble-gold {
+    @apply text-[#FFC700];
+  }
+
+  .bg-preamble-light {
+    @apply bg-[#ECF0F6];
+  }
+
+  .bg-preamble-navy {
+    @apply bg-[#1F2C6D];
+  }
+
+  .bg-preamble-blue {
+    @apply bg-[#4556E4];
+  }
+
+  .bg-preamble-gold {
+    @apply bg-[#FFC700];
+  }
+} 
