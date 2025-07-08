@@ -67,7 +67,7 @@ To become the premier AI red teaming platform for the AI security community, pro
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/your-org/prompt-injector.git
+   git clone https://github.com/preambleai/prompt-injector
    cd prompt-injector
    ```
 

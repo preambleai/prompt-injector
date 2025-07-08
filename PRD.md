@@ -155,7 +155,6 @@ Prompt-Injector/
 
 ## 14. Appendix: Technical Deep Dives & Taxonomies
 - For detailed attack categories, detection/defense mechanisms, and full technical architecture, see [PROMPT_INJECTOR_DIAGRAMS.md](PROMPT_INJECTOR_DIAGRAMS.md).
-- For the full taxonomy of supported platforms, integration methods, and attack vectors, see the technical appendix or [PROMPT_INJECTOR_DIAGRAMS.md](PROMPT_INJECTOR_DIAGRAMS.md).
 
 ---
 
