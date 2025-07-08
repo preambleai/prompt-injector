@@ -2,7 +2,7 @@
 
 [![Download for macOS (Apple Silicon)](https://img.shields.io/badge/Download-macOS%20(Apple%20Silicon)-blue?logo=apple)](https://github.com/your-org/your-repo/releases/latest/download/Prompt%20Injector-1.0.0-arm64.dmg)
 [![Download for Windows](https://img.shields.io/badge/Download-Windows-green?logo=windows)](https://github.com/your-org/your-repo/releases/latest/download/Prompt%20Injector%20Setup%201.0.0.exe)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://www.apache.org/licenses/LICENSE-2.0)
 [![Contributions Welcome](https://img.shields.io/badge/contributions-welcome-brightgreen.svg?style=flat)](CONTRIBUTING.md)
 
 **Copyright (c) 2025 Preamble, Inc. All rights reserved.**
@@ -207,7 +207,6 @@ npm run build
 - **[Security Guide](docs/SECURITY.md)**: Security best practices
 - **[Deployment Guide](docs/DEPLOYMENT.md)**: Production deployment instructions
 - **[Contributing Guidelines](CONTRIBUTING.md)**: How to contribute
-- **[Code of Conduct](CODE_OF_CONDUCT.md)**: Community guidelines
 
 ## 🔒 Security
 
@@ -470,7 +469,7 @@ This is an active development project. Contributions are welcome!
 
 ## 📄 License
 
-MIT License - see [LICENSE](LICENSE) file for details.
+Apache License 2.0 - see [LICENSE](LICENSE) file for details.
 
 ---
 
