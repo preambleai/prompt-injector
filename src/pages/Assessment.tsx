@@ -1234,28 +1234,34 @@ const Assessment: React.FC = () => {
         <h2 className="text-2xl font-bold text-gray-900 mb-2">What type of AI solution are you assessing?</h2>
         <p className="text-gray-600">Select the primary type of AI system you want to assess</p>
       </div>
-      
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {aiSolutionTypes.map((solution) => (
-          <div
-            key={solution.id}
-            onClick={() => setSelectedSolutionType(solution)}
-            className={`p-6 rounded-lg border-2 cursor-pointer transition-all hover:shadow-md ${
-              selectedSolutionType?.id === solution.id
-                ? 'border-blue-500 bg-blue-50'
-                : 'border-gray-200 hover:border-gray-300'
-            }`}
-          >
-            <div className="flex items-center space-x-3 mb-3">
-              <solution.icon className="w-6 h-6" />
-              <h3 className="font-semibold text-gray-900">{solution.name}</h3>
+        {aiSolutionTypes.map((solution) => {
+          const isStandalone = solution.id === 'standalone-llm';
+          return (
+            <div
+              key={solution.id}
+              onClick={isStandalone ? () => setSelectedSolutionType(solution) : undefined}
+              className={`p-6 rounded-lg border-2 transition-all hover:shadow-md relative ${
+                selectedSolutionType?.id === solution.id
+                  ? 'border-blue-500 bg-blue-50'
+                  : 'border-gray-200 hover:border-gray-300'
+              } ${isStandalone ? 'cursor-pointer' : 'opacity-60 cursor-not-allowed'}`}
+              style={!isStandalone ? { pointerEvents: 'none' } : {}}
+            >
+              <div className="flex items-center space-x-3 mb-3">
+                <solution.icon className="w-6 h-6" />
+                <h3 className="font-semibold text-gray-900">{solution.name}</h3>
+              </div>
+              <p className="text-sm text-gray-600 mb-3">{solution.description}</p>
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-gray-500">{solution.components.length} components</span>
+                {!isStandalone && (
+                  <span className="ml-2 px-2 py-1 rounded-full bg-yellow-100 text-yellow-700 text-xs font-semibold">Coming Soon</span>
+                )}
+              </div>
             </div>
-            <p className="text-sm text-gray-600 mb-3">{solution.description}</p>
-            <div className="flex items-center justify-between">
-              <span className="text-xs text-gray-500">{solution.components.length} components</span>
-            </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   )

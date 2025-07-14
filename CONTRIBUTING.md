@@ -8,7 +8,7 @@ Thank you for your interest in contributing to Prompt Injector! This document pr
 
 1. **Fork the repository**
    ```bash
-   git clone https://github.com/your-username/prompt-injector.git
+   git clone https://github.com/preambleai/prompt-injector.git
    cd prompt-injector
    ```
 
