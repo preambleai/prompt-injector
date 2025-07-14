@@ -46,9 +46,7 @@ Icon?
 # Windows system files
 Desktop.ini
 
-# Output from package managers
-package-lock.json
-yarn.lock
+
 
 # Optional: Uncomment if you want to ignore local database files
 # *.sqlite
