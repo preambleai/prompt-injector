@@ -10,7 +10,7 @@ import React from 'react'
 import { useLocation, Link } from 'react-router-dom'
 import { 
   Shield, Settings, BarChart3, Bug, FileText, ShieldCheck,
-  ChevronRight, Target, Network, Brain, Award, Layers, Zap, Wand2
+  ChevronRight, Target, Network, Brain, Award, Layers, Zap, Wand2, Clock
 } from 'lucide-react'
 import SearchBar from './SearchBar'
 
@@ -25,12 +25,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     { name: 'Dashboard', href: '/', icon: BarChart3 },
     { name: 'Adaptive Payloads', href: '/adaptive-payloads', icon: Zap },
     { name: 'Assessment', href: '/assessment', icon: Wand2 },
-    { name: 'Red Teaming', href: '/red-teaming', icon: Target },
-    { name: 'Benchmark Integration', href: '/benchmark-integration', icon: Award },
-    { name: 'Results', href: '/results', icon: FileText },
-    { name: 'Defenses', href: '/defenses', icon: ShieldCheck },
-    { name: 'Compliance & Risk', href: '/compliance-testing', icon: Shield },
-    { name: 'Tools & Resources', href: '/tools-resources', icon: Brain },
+    { name: 'Test History', href: '/test-history', icon: Clock },
     { name: 'Settings', href: '/settings', icon: Settings },
   ]
 

@@ -15,36 +15,24 @@ To become the premier AI red teaming platform for the AI security community, pro
 
 ## 🚀 Features
 
-### Phase 1: Core Security Testing (Current)
-- **Attack Engine**: Core attack testing engine with 100+ payloads
+### Currently Implemented
+- **Attack Engine**: Core attack testing engine with 100+ OWASP LLM01-LLM10 payloads
 - **Desktop Application**: Electron-based desktop app with React frontend
 - **Real-time Testing**: Create and run attack tests with live results
 - **Payload Management**: Browse and select from categorized attack payloads
 - **Test Results**: View detailed test results with success/failure indicators
 
-### Phase 2: Advanced Detection (In Development)
-- **Semantic Guardian**: ML-based detection stack with 98% recall target
-- **AI Red Teaming**: Model extraction, adversarial examples, data poisoning testing
-- **Adaptive Payloads**: AI-driven attack generation and evolution
-- **Multi-Model Support**: OpenAI, Anthropic, Google, Meta, and local models
+### Partially Implemented / UI-Only / Simulated
+- **AI Model API Integration**: OpenAI partially wired; Anthropic and Google Gemini present in UI but not fully integrated; local model support present
+- **Advanced Detection (Semantic Guardian)**: Simulated/heuristic only; ML/vector DB not yet implemented
+- **Red Team Campaigns**: UI and campaign builder exist; backend logic is stubbed
+- **Agent Framework Testing**: UI and some simulated backend logic; deeper integration planned
+- **MCP Testing**: UI present, backend logic not yet implemented
+- **Adaptive Payloads**: Heuristic only; not ML-driven
+- **Reporting Engine**: Some reporting features exist, but advanced analytics and export are not complete
+- **Evidence Collection**: Some evidence storage and display, but not full-featured
 
-### Phase 3: Agent Framework Testing (Planned)
-- **MCP Testing**: Model Context Protocol server and client testing
-- **Multi-Agent Testing**: Prompt infection simulation in agent networks
-- **Live Instrumentation**: Real-time agent monitoring and detection
-- **Framework Support**: LangChain, AutoGen, CrewAI, LangGraph integration
-
-### Phase 4: Research Integration (Planned)
-- **Academic Benchmarks**: AgentDojo, AdvBench, INJECAGENT integration
-- **Research Reproduction**: Latest academic paper implementations
-- **Multi-Agent Systems**: Advanced agent network testing
-- **Continuous Innovation**: Stay ahead of emerging threats
-
-### Phase 5: Advanced Local Features (Planned)
-- **Plugin System**: Extensible architecture for community plugins
-- **Advanced Analytics**: Local data analysis and reporting
-- **Community Features**: User-contributed payloads and templates
-- **Research Tools**: Academic research support capabilities
+> **Note:** Many features are UI-only, simulated, or stubbed. See [PRD.md](PRD.md) for a detailed, regularly updated table of feature status.
 
 ## 🛠️ Technology Stack
 
@@ -115,46 +103,59 @@ To become the premier AI red teaming platform for the AI security community, pro
 
 ## 🗺️ Roadmap
 
-### Q3 2025: Foundation & Core Features
-- [x] Basic attack engine implementation
-- [x] Desktop application framework
-- [x] Core payload management
-- [ ] OpenAI/Anthropic/Google API integration
-- [ ] Basic detection capabilities
-- [ ] Test result visualization
+### Phase 1: Foundation & Core Infrastructure
+- [x] Core attack engine implementation
+- [x] Desktop application framework (Electron + React)
+- [x] Basic UI with test creation and execution
+- [x] 100+ payloads available
+- [ ] AI Model API Integration (OpenAI, Anthropic, Google APIs)
+- [ ] Basic Detection (simple success/failure detection)
+- [ ] Test Result Visualization (detailed result display)
+- [ ] User Authentication (basic user management)
 
-### Q4 2025: Advanced Detection & AI Red Teaming
-- [ ] Semantic Guardian detector stack
-- [ ] AI red teaming capabilities
-- [ ] Adaptive payload generation
-- [ ] Multi-model support expansion
-- [ ] Performance optimization
+### Phase 2: Advanced Detection & AI Red Teaming
+- [ ] Semantic Guardian (ML-based detection stack)
+- [ ] AI Red Teaming (model extraction, adversarial examples)
+- [ ] Adaptive Payloads (AI-driven attack generation)
+- [ ] Multi-Model Support (OpenAI, Anthropic, Google, Meta, local models)
+- [ ] Performance Optimization (sub-15 second response times)
+- [ ] Advanced Analytics (detailed attack analysis)
 
-### Q1 2026: Agent Framework Testing
-- [ ] Complete MCP testing environment
-- [ ] Live agent instrumentation
-- [ ] Agent framework support (8+ frameworks)
-- [ ] Real-time monitoring capabilities
-- [ ] Multi-agent system testing
+### Phase 3: Agent Framework Testing
+- [ ] MCP Testing Environment (complete MCP server/client testing)
+- [ ] Live Agent Instrumentation (real-time agent monitoring)
+- [ ] Agent Framework Support (8+ framework integrations)
+- [ ] Multi-Agent Testing (agent network simulation)
+- [ ] Prompt Infection (self-replicating prompt spread)
+- [ ] Real-time Monitoring (live agent interaction tracking)
+- [ ] System Impact Assessment (measuring disruption and data leakage)
+- [ ] Recovery Time Testing (time to detect and mitigate infections)
 
-### Q2 2026: Research Integration
+### Phase 4: Research Integration
 - [ ] Academic benchmark integration
 - [ ] Research-based attack simulation
 - [ ] Multi-agent system testing
 - [ ] Academic paper reproduction
 - [ ] University partnerships
 
-### Q3 2026: Advanced Local Features
-- [ ] Plugin system for extensibility
-- [ ] Advanced local analytics
-- [ ] Community features and sharing
-- [ ] Research tools integration
+### Phase 5: Advanced Local Features
+- [ ] Advanced Analytics (local data analysis and reporting)
+- [ ] Custom Payload Creation (user-defined attack payloads)
+- [ ] Plugin System (extensible architecture for community plugins)
+- [ ] Advanced Reporting (comprehensive security reports)
+- [ ] Local ML Models (on-device machine learning capabilities)
+- [ ] Community Features (payload sharing, template library, documentation hub, tutorial system)
 
-### Q4 2026: Innovation & Research Leadership
-- [ ] Research leadership position
-- [ ] Advanced local ML capabilities
-- [ ] Community research platform
-- [ ] Academic partnerships
+### Phase 6: Innovation & Research Leadership
+- [ ] Generative Adversarial Attack Engine (AI-driven attack evolution)
+- [ ] Research Leadership (academic research contributions)
+- [ ] Research Institute Partnerships (academic partnerships)
+- [ ] Industry Standards Contribution (standards development)
+- [ ] Open Source Leadership (leading the AI security community)
+- [ ] Latest Research Models (cutting-edge model integration)
+- [ ] Advanced Local ML (sophisticated on-device AI)
+- [ ] Research Tools (academic research support tools)
+- [ ] Community Research (community-driven research platform)
 
 ## 🤝 Contributing
 
@@ -202,11 +203,10 @@ npm run build
 ## 📚 Documentation
 
 - **[Architecture Guide](docs/ARCHITECTURE.md)**: System architecture and design
-- **[API Reference](docs/API.md)**: API documentation and examples
-- **[Development Guide](docs/DEVELOPMENT.md)**: Development setup and guidelines
-- **[Security Guide](docs/SECURITY.md)**: Security best practices
-- **[Deployment Guide](docs/DEPLOYMENT.md)**: Production deployment instructions
 - **[Contributing Guidelines](CONTRIBUTING.md)**: How to contribute
+- **[Product Requirements Document](docs/PRD.md)**: Feature status and implementation map
+- **[Build Instructions](docs/BUILD_INSTRUCTIONS.md)**: Build and release process
+- **[Quick Reference](docs/QUICK_REFERENCE.md)**: Links to all key docs
 
 ## 🔒 Security
 
@@ -217,39 +217,31 @@ npm run build
 - **Real-time Monitoring**: Live updates during test execution
 
 
-## 📊 Project Status
+## 📊 Current Status
 
-**Current Phase**: Phase 1 - Foundation & Core Infrastructure
-**Next Milestone**: Red Teaming 
-
-
-### Completed Features ✅
+**Phase 1 - Foundation & Core Infrastructure**
 - Core attack engine implemented
 - Desktop application running
 - Basic UI with test creation and execution
-- 100+ payloads available
+- 100+ OWASP LLM01-LLM10 payloads available
 
-### In Progress 🚧
-- **AI Model API Integration**: Partial/stubbed (OpenAI wired; Anthropic and Google Gemini present but not fully integrated; local model support present)
-- **Advanced Detection Capabilities**: Simulated/heuristic only (Semantic Guardian and response analysis present as heuristics; ML/vector DB not yet implemented)
-- **Performance Optimization**: Ongoing (core engine and UI optimized, but multi-model and advanced analytics are not)
-- **Test Result Visualization**: Partial (basic result display implemented; advanced analytics and reporting are partial)
-- **Red Team Campaigns**: UI + stub backend (UI and campaign builder exist; backend logic is stubbed)
-- **Agent Framework Testing**: UI + partial backend (UI and some simulated backend logic; deeper integration with frameworks planned)
-- **MCP Testing**: UI only (UI present, backend logic not yet implemented)
-- **Detection Engine (Semantic Guardian)**: Simulated/heuristic (not ML-based yet; vector DB and advanced detection are planned)
-- **Benchmark Integration**: Simulated/stubbed (UI and simulated data; real data and PDF export are planned)
-- **Adaptive Payloads**: Heuristic only (some adaptive logic present, but not ML-driven)
-- **UI Wizards (Testing, Red Team)**: UI only/partial (wizards exist, but backend wiring is incomplete)
-- **MCP Server Management**: UI only (UI present, backend logic not yet implemented)
-- **Reporting Engine**: Partial (some reporting features exist, but advanced analytics and export are not complete)
-- **Evidence Collection**: Partial (some evidence storage and display, but not full-featured)
+**In Progress**
+- AI Model API integration (OpenAI partial, others UI only)
+- Advanced detection capabilities (simulated/heuristic)
+- Test result visualization (basic only)
+- Red Team Campaigns (UI + stub backend)
+- Agent Framework Testing (UI + partial backend)
+- MCP Testing (UI only)
+- Adaptive Payloads (heuristic only)
+- Reporting Engine (partial)
+- Evidence Collection (partial)
 
-### Planned Features 📋
-- MCP testing environment
-- Multi-agent system testing
+**Planned**
+- Plugin system
 - Advanced local features
 - Research integration
+
+> For a detailed, regularly updated table of feature status, including which modules are UI-only, simulated, stubbed, or fully integrated, see [PRD.md](PRD.md).
 
 ## 🏗️ Project Structure
 
@@ -466,7 +458,7 @@ The application uses a modern, clean interface with:
 - Core attack engine implemented
 - Desktop application running
 - Basic UI with test creation and execution
-- 10+ OWASP LLM01-LLM10 payloads available
+- 100+ OWASP LLM01-LLM10 payloads available
 
 **Next Steps**
 - Implement actual AI model integration

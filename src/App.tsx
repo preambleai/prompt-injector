@@ -12,14 +12,9 @@ import Layout from './components/Layout'
 import ErrorBoundary from './components/ErrorBoundary'
 import Dashboard from './pages/Dashboard'
 import Assessment from './pages/Assessment'
-import RedTeaming from './pages/RedTeaming'
-import BenchmarkIntegration from './pages/BenchmarkIntegration'
-import Results from './pages/Results'
-import Defenses from './pages/Defenses'
-import ComplianceTesting from './pages/ComplianceTesting'
-import ToolsResources from './pages/ToolsResources'
 import AdaptivePayloads from './pages/AdaptivePayloads'
 import Settings from './pages/Settings'
+import TestHistory from './pages/TestHistory'
 
 function App() {
   return (
@@ -28,14 +23,9 @@ function App() {
         <Routes>
           <Route path="/" element={<Dashboard />} />
           <Route path="/assessment" element={<Assessment />} />
-          <Route path="/red-teaming" element={<RedTeaming />} />
-          <Route path="/benchmark-integration" element={<BenchmarkIntegration />} />
-          <Route path="/results" element={<Results />} />
-          <Route path="/defenses" element={<Defenses />} />
-          <Route path="/compliance-testing" element={<ComplianceTesting />} />
-          <Route path="/tools-resources" element={<ToolsResources />} />
           <Route path="/adaptive-payloads" element={<AdaptivePayloads />} />
           <Route path="/settings" element={<Settings />} />
+          <Route path="/test-history" element={<TestHistory />} />
         </Routes>
       </Layout>
     </ErrorBoundary>

@@ -216,49 +216,6 @@ const Dashboard = () => {
               <BarChart3 className="h-4 w-4" />
               <span>3. Run Tests & Review Results</span>
             </a>
-            <a 
-              href="/defenses" 
-              className="block w-full bg-[#1F2C6D] text-white text-center py-3 px-4 rounded-lg hover:bg-[#081423] transition-colors flex items-center justify-center space-x-2"
-            >
-              <Shield className="h-4 w-4" />
-              <span>4. Implement Defenses</span>
-            </a>
-          </div>
-        </div>
-      </div>
-
-      {/* Platform Features */}
-      <div className="bg-white rounded-lg shadow p-6">
-        <h2 className="text-xl font-semibold mb-4">Platform Features</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div>
-            <h3 className="font-medium text-gray-900 mb-2">Supported AI Platforms</h3>
-            <ul className="text-sm text-gray-600 space-y-1">
-              <li>• OpenAI (GPT-4, GPT-3.5 Turbo)</li>
-              <li>• Anthropic (Claude 3 Sonnet, Haiku)</li>
-              <li>• Google (Gemini Pro)</li>
-              <li>• Custom API endpoints</li>
-            </ul>
-          </div>
-          <div>
-            <h3 className="font-medium text-gray-900 mb-2">Attack Categories</h3>
-            <ul className="text-sm text-gray-600 space-y-1">
-              <li>• OWASP LLM01-LLM10 vulnerabilities</li>
-              <li>• System prompt extraction</li>
-              <li>• Role confusion attacks</li>
-              <li>• Training data extraction</li>
-              <li>• Supply chain attacks</li>
-            </ul>
-          </div>
-          <div>
-            <h3 className="font-medium text-gray-900 mb-2">Advanced Testing</h3>
-            <ul className="text-sm text-gray-600 space-y-1">
-              <li>• AI Red Teaming</li>
-              <li>• MCP Server Testing</li>
-              <li>• Agent Framework Testing</li>
-              <li>• Benchmark Integration</li>
-              <li>• Live Instrumentation</li>
-            </ul>
           </div>
         </div>
       </div>

@@ -32,7 +32,7 @@ class SearchService {
 
     const results: SearchResult[] = []
 
-    // Index pages
+    // Index only implemented pages
     const pages = [
       {
         id: 'dashboard',
@@ -42,30 +42,7 @@ class SearchService {
         url: '/',
         keywords: ['dashboard', 'main', 'home', 'overview', 'quick', 'actions', 'stats', 'summary']
       },
-      {
-        id: 'testing',
-        type: 'page' as const,
-        title: 'Testing',
-        description: 'Create and run prompt injection tests',
-        url: '/testing',
-        keywords: ['test', 'testing', 'create', 'run', 'execute', 'attack', 'injection', 'payload', 'vulnerability']
-      },
-      {
-        id: 'red-teaming',
-        type: 'page' as const,
-        title: 'Red Teaming',
-        description: 'Advanced red team exercises and adversarial testing',
-        url: '/red-teaming',
-        keywords: ['red team', 'adversarial', 'advanced', 'exercise', 'attack', 'wizard', 'extraction', 'poisoning']
-      },
-      {
-        id: 'benchmark',
-        type: 'page' as const,
-        title: 'Benchmark Integration',
-        description: 'Performance benchmarking and model comparison',
-        url: '/benchmark-integration',
-        keywords: ['benchmark', 'performance', 'comparison', 'metrics', 'evaluation', 'speed']
-      },
+      // Removed 'testing' page from search index because there is no /testing route in App.tsx
       {
         id: 'results',
         type: 'page' as const,
@@ -73,30 +50,6 @@ class SearchService {
         description: 'View and analyze test results',
         url: '/results',
         keywords: ['result', 'analysis', 'report', 'view', 'history', 'export', 'download']
-      },
-      {
-        id: 'defenses',
-        type: 'page' as const,
-        title: 'Defenses',
-        description: 'Configure and test defense mechanisms',
-        url: '/defenses',
-        keywords: ['defense', 'protection', 'security', 'mechanism', 'guard', 'guardrail', 'filter', 'block']
-      },
-      {
-        id: 'compliance',
-        type: 'page' as const,
-        title: 'Compliance & Risk',
-        description: 'Compliance testing and risk assessment',
-        url: '/compliance-testing',
-        keywords: ['compliance', 'risk', 'assessment', 'regulation', 'audit', 'gdpr', 'hipaa', 'sox']
-      },
-      {
-        id: 'tools',
-        type: 'page' as const,
-        title: 'Tools & Resources',
-        description: 'Security tools, frameworks, and research papers',
-        url: '/tools-resources',
-        keywords: ['tool', 'resource', 'framework', 'paper', 'research', 'library', 'github', 'owasp']
       },
       {
         id: 'settings',
@@ -108,7 +61,7 @@ class SearchService {
       }
     ]
 
-    // Add pages to results
+    // Add only implemented pages to results
     pages.forEach(page => {
       results.push({
         id: page.id,
@@ -120,27 +73,10 @@ class SearchService {
       })
     })
 
-    // Index models
-    try {
-      const models = loadModels()
-      models.forEach(model => {
-        results.push({
-          id: `model-${model.id}`,
-          type: 'model',
-          title: model.name,
-          description: `${model.provider} model for testing`,
-          url: '/settings',
-          relevance: 0
-        })
-      })
-    } catch (error) {
-      console.warn('Could not load models for search index:', error)
-    }
-
-    // Index attack payloads
+    // Index only implemented payloads (OWASP LLM01-LLM10)
     try {
       const payloads = await loadAttackPayloads()
-      payloads.forEach((payload: any) => {
+      payloads.filter((payload: any) => payload.owaspCategory && payload.owaspCategory.startsWith('LLM0')).forEach((payload: any) => {
         results.push({
           id: `payload-${payload.id}`,
           type: 'payload',
@@ -154,252 +90,9 @@ class SearchService {
       console.warn('Could not load payloads for search index:', error)
     }
 
-    // Index defense mechanisms
-    const defenseMechanisms = [
-      {
-        id: 'preamble-trust-platform',
-        type: 'defense' as const,
-        title: 'Preamble AI Trust Platform',
-        description: 'Customizable guardrails and AI safety controls for enterprise applications',
-        url: '/defenses?tab=mechanisms',
-        relevance: 0,
-        keywords: ['preamble', 'trust', 'platform', 'guardrail', 'customizable', 'enterprise', 'safety', 'ai']
-      },
-      {
-        id: 'secalign',
-        type: 'defense' as const,
-        title: 'SecAlign',
-        description: 'Security alignment for AI models using constitutional AI principles',
-        url: '/defenses?tab=mechanisms',
-        relevance: 0,
-        keywords: ['secalign', 'alignment', 'constitutional', 'principles', 'ethics', 'safety']
-      },
-      {
-        id: 'spotlighting',
-        type: 'defense' as const,
-        title: 'Prompt Spotlighting',
-        description: 'Highlight and validate system prompts to prevent injection attacks',
-        url: '/defenses?tab=mechanisms',
-        relevance: 0,
-        keywords: ['spotlighting', 'prompt', 'system', 'highlight', 'validate', 'injection']
-      },
-      {
-        id: 'adversarial',
-        type: 'defense' as const,
-        title: 'Adversarial Training',
-        description: 'Train models with adversarial examples to improve robustness',
-        url: '/defenses?tab=mechanisms',
-        relevance: 0,
-        keywords: ['adversarial', 'training', 'robustness', 'examples', 'attack', 'defense']
-      },
-      {
-        id: 'ensemble',
-        type: 'defense' as const,
-        title: 'Ensemble Detection',
-        description: 'Multiple detection models working together for better accuracy',
-        url: '/defenses?tab=mechanisms',
-        relevance: 0,
-        keywords: ['ensemble', 'detection', 'multiple', 'models', 'accuracy', 'collaboration']
-      },
-      {
-        id: 'robust',
-        type: 'defense' as const,
-        title: 'Robust Prompting',
-        description: 'Techniques to make prompts more resistant to injection attacks',
-        url: '/defenses?tab=mechanisms',
-        relevance: 0,
-        keywords: ['robust', 'prompting', 'resistant', 'techniques', 'injection', 'attack']
-      }
-    ]
+    // Do not index models, defenses, vulnerabilities, research, or frameworks unless implemented
+    // (All other indexing is removed for MVP focus)
 
-    // Index OWASP vulnerabilities
-    const owaspVulnerabilities = [
-      {
-        id: 'llm01',
-        type: 'vulnerability' as const,
-        title: 'LLM01: Prompt Injection',
-        description: 'System prompt extraction and role confusion attacks',
-        url: '/testing',
-        relevance: 0,
-        keywords: ['llm01', 'prompt injection', 'system prompt', 'extraction', 'role confusion']
-      },
-      {
-        id: 'grok-vulnerabilities',
-        type: 'vulnerability' as const,
-        title: 'Grok-Specific Vulnerabilities',
-        description: 'xAI Grok model vulnerabilities including reasoning mode bypass and DeepSearch exploitation',
-        url: '/testing',
-        relevance: 0,
-        keywords: ['grok', 'xai', 'reasoning mode', 'deepsearch', 'file attachment', 'web search', 'big brain mode']
-      },
-      {
-        id: 'llm02',
-        type: 'vulnerability' as const,
-        title: 'LLM02: Insecure Output Handling',
-        description: 'Handling of model outputs without proper validation',
-        url: '/testing',
-        relevance: 0,
-        keywords: ['llm02', 'output handling', 'validation', 'insecure', 'model output']
-      },
-      {
-        id: 'llm03',
-        type: 'vulnerability' as const,
-        title: 'LLM03: Training Data Poisoning',
-        description: 'Malicious training data affecting model behavior',
-        url: '/testing',
-        relevance: 0,
-        keywords: ['llm03', 'training data', 'poisoning', 'malicious', 'behavior']
-      },
-      {
-        id: 'llm04',
-        type: 'vulnerability' as const,
-        title: 'LLM04: Model Denial of Service',
-        description: 'Resource exhaustion attacks against AI models',
-        url: '/testing',
-        relevance: 0,
-        keywords: ['llm04', 'denial of service', 'dos', 'resource exhaustion', 'attack']
-      },
-      {
-        id: 'llm05',
-        type: 'vulnerability' as const,
-        title: 'LLM05: Supply Chain Vulnerabilities',
-        description: 'Vulnerabilities in AI model supply chain and dependencies',
-        url: '/testing',
-        relevance: 0,
-        keywords: ['llm05', 'supply chain', 'dependencies', 'vulnerabilities', 'security']
-      }
-    ]
-
-    // Index research papers
-    const researchPapers = [
-      {
-        id: 'paper-foundational',
-        type: 'research' as const,
-        title: 'Evaluating the Susceptibility of Pre-Trained Language Models via Handcrafted Adversarial Examples',
-        description: 'The first paper to identify and demonstrate prompt injection attacks, establishing the foundational concept before it was formally named',
-        url: '/tools-resources?tab=research',
-        relevance: 0,
-        keywords: ['foundational', 'first', 'prompt injection', 'training data extraction', 'branch', 'cefalu', 'mchugh', '2022', 'original', 'groundbreaking', 'adversarial examples']
-      },
-      {
-        id: 'paper-1',
-        type: 'research' as const,
-        title: 'Universal and Transferable Adversarial Attacks on Aligned Language Models',
-        description: 'Research on adversarial attacks against aligned language models',
-        url: '/tools-resources?tab=research',
-        relevance: 0,
-        keywords: ['adversarial', 'attack', 'aligned', 'language model', 'transferable', 'universal']
-      },
-      {
-        id: 'paper-2',
-        type: 'research' as const,
-        title: 'Jailbreaking Black Box Large Language Models in Twenty Queries',
-        description: 'Efficient jailbreaking techniques for black box LLMs',
-        url: '/tools-resources?tab=research',
-        relevance: 0,
-        keywords: ['jailbreaking', 'black box', 'large language model', 'queries', 'efficient']
-      },
-      {
-        id: 'paper-3',
-        type: 'research' as const,
-        title: 'Prompt Injection Attacks and Defenses in LLM-Integrated Applications',
-        description: 'Comprehensive study of prompt injection attacks and defense mechanisms',
-        url: '/tools-resources?tab=research',
-        relevance: 0,
-        keywords: ['prompt injection', 'attack', 'defense', 'llm', 'integrated', 'application']
-      },
-      {
-        id: 'paper-4',
-        type: 'research' as const,
-        title: 'Red Teaming Language Models to Reduce Harms',
-        description: 'Red teaming approaches for identifying and mitigating LLM harms',
-        url: '/tools-resources?tab=research',
-        relevance: 0,
-        keywords: ['red teaming', 'language model', 'harm', 'mitigation', 'identification']
-      },
-      {
-        id: 'paper-5',
-        type: 'research' as const,
-        title: 'Evaluating Large Language Models Trained on Code',
-        description: 'Assessment of code-trained language models and their vulnerabilities',
-        url: '/tools-resources?tab=research',
-        relevance: 0,
-        keywords: ['evaluation', 'large language model', 'code', 'training', 'vulnerability']
-      },
-
-      {
-        id: 'paper-7',
-        type: 'research' as const,
-        title: 'DeepSearch Exploitation: Web Search Capabilities in AI Models',
-        description: 'Research on exploiting web search capabilities in AI models like Grok',
-        url: '/tools-resources?tab=research',
-        relevance: 0,
-        keywords: ['deepsearch', 'web search', 'grok', 'exploitation', 'ai model', 'information gathering']
-      },
-      {
-        id: 'paper-8',
-        type: 'research' as const,
-        title: 'File Attachment Security in AI Assistants: A Grok Case Study',
-        description: 'Security implications of file attachment capabilities in AI assistants',
-        url: '/tools-resources?tab=research',
-        relevance: 0,
-        keywords: ['file attachment', 'ai assistant', 'grok', 'security', 'data extraction', 'case study']
-      }
-    ]
-
-    // Index risk frameworks
-    const riskFrameworks = [
-      {
-        id: 'owasp-llm',
-        type: 'framework' as const,
-        title: 'OWASP Top 10 for Large Language Model Applications',
-        description: 'Comprehensive security framework for LLM applications',
-        url: '/tools-resources?tab=frameworks',
-        relevance: 0,
-        keywords: ['owasp', 'top 10', 'large language model', 'application', 'security', 'framework']
-      },
-      {
-        id: 'mitre-atlas',
-        type: 'framework' as const,
-        title: 'MITRE ATLAS Framework',
-        description: 'Adversarial Threat Landscape for Artificial-Intelligence Systems',
-        url: '/tools-resources?tab=frameworks',
-        relevance: 0,
-        keywords: ['mitre', 'atlas', 'adversarial', 'threat', 'landscape', 'artificial intelligence', 'system']
-      },
-      {
-        id: 'nist-ai-risk',
-        type: 'framework' as const,
-        title: 'NIST AI Risk Management Framework',
-        description: 'Framework for managing risks in AI systems',
-        url: '/tools-resources?tab=frameworks',
-        relevance: 0,
-        keywords: ['nist', 'ai', 'risk', 'management', 'framework', 'system']
-      },
-      {
-        id: 'iso-42001',
-        type: 'framework' as const,
-        title: 'ISO 42001 AI Management System',
-        description: 'International standard for AI management systems',
-        url: '/tools-resources?tab=frameworks',
-        relevance: 0,
-        keywords: ['iso', '42001', 'ai', 'management', 'system', 'standard', 'international']
-      },
-      {
-        id: 'gptf',
-        type: 'framework' as const,
-        title: 'GPTF (Generative AI Policy Framework)',
-        description: 'Policy framework for generative AI governance',
-        url: '/tools-resources?tab=frameworks',
-        relevance: 0,
-        keywords: ['gptf', 'generative ai', 'policy', 'framework', 'governance']
-      }
-    ]
-
-    // Add all indexed content to results
-    results.push(...defenseMechanisms, ...owaspVulnerabilities, ...researchPapers, ...riskFrameworks)
-
-    // Build search index
     this.buildSearchIndex(results)
     this.isIndexed = true
   }

@@ -12,6 +12,7 @@ import { QueryClient, QueryClientProvider } from 'react-query'
 import { BrowserRouter } from 'react-router-dom'
 import App from './App.tsx'
 import './index.css'
+import TestHistory from './pages/TestHistory'
 
 const queryClient = new QueryClient({
   defaultOptions: {

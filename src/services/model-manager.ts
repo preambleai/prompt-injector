@@ -83,77 +83,47 @@ export const loadModels = async (): Promise<AIModel[]> => {
     if (stored) {
       return JSON.parse(stored)
     }
-    
-    // Return default models if none exist
-    return [
-      {
-        id: 'gpt-4-default',
-        name: 'GPT-4',
-        provider: 'OpenAI',
-        endpoint: 'https://api.openai.com/v1/chat/completions',
-        model: 'gpt-4',
-        enabled: true
-      },
-      {
-        id: 'claude-3-default',
-        name: 'Claude 3 Sonnet',
-        provider: 'Anthropic',
-        endpoint: 'https://api.anthropic.com/v1/messages',
-        model: 'claude-3-sonnet-20240229',
-        enabled: true
-      }
-    ]
+    // Return empty array if none exist
+    return []
   } catch (error) {
     console.error('Failed to load models:', error)
     return []
   }
 }
 
-// Save models to localStorage
-export const saveModels = (models: AIModel[]): void => {
-  try {
-    localStorage.setItem('ai-models', JSON.stringify(models))
-  } catch (error) {
-    console.error('Failed to save models:', error)
-  }
+// Save models to localStorage (excluding apiKey)
+export const saveModels = async (models: AIModel[]): Promise<void> => {
+  // Remove apiKey from each model before saving
+  const sanitized = models.map(({ apiKey, ...rest }) => rest)
+  localStorage.setItem('ai-models', JSON.stringify(sanitized))
 }
 
-// Add a new model
-export const addModel = async (model: Omit<AIModel, 'id'>): Promise<AIModel> => {
-  const newModel: AIModel = {
-    ...model,
-    id: `${model.provider.toLowerCase()}-${model.model}-${Date.now()}`
-  }
-  
+// Add a model (do not persist apiKey)
+export const addModel = async (model: AIModel): Promise<void> => {
   const models = await loadModels()
-  models.push(newModel)
-  saveModels(models)
-  
-  return newModel
+  // Remove apiKey before saving
+  const { apiKey, ...rest } = model
+  models.push(rest)
+  await saveModels(models)
 }
 
-// Update an existing model
-export const updateModel = async (id: string, updates: Partial<AIModel>): Promise<AIModel | null> => {
+// Update a model (do not persist apiKey)
+export const updateModel = async (id: string, updates: Partial<AIModel>): Promise<void> => {
   const models = await loadModels()
-  const index = models.findIndex(m => m.id === id)
-  
-  if (index === -1) return null
-  
-  models[index] = { ...models[index], ...updates }
-  saveModels(models)
-  
-  return models[index]
+  const idx = models.findIndex(m => m.id === id)
+  if (idx !== -1) {
+    // Remove apiKey from updates before saving
+    const { apiKey, ...rest } = updates
+    models[idx] = { ...models[idx], ...rest }
+    await saveModels(models)
+  }
 }
 
 // Delete a model
-export const deleteModel = async (id: string): Promise<boolean> => {
+export const deleteModel = async (id: string): Promise<void> => {
   const models = await loadModels()
   const filtered = models.filter(m => m.id !== id)
-  
-  if (filtered.length === models.length) return false
-  
-  saveModels(filtered)
-  return true
+  await saveModels(filtered)
 }
 
 // Get model by ID

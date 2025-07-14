@@ -127,12 +127,17 @@ export const executeTest = async (
 
 // Execute test based on model provider
 const executeModelTest = async (model: AIModel, payload: AttackPayload): Promise<string> => {
-  // Check if we have a valid API key
-  if (!model.apiKey || model.apiKey === '') {
+  const provider = model.provider || ''
+  const apiKey = model.apiKey || 'localhost'
+  // Check if we have a valid API key, except for Ollama
+  if (
+    provider.toLowerCase() !== 'ollama' &&
+    (!model.apiKey || model.apiKey === '')
+  ) {
     throw new Error('Valid API key required for production testing. Please configure your API keys in Settings.')
   }
 
-  switch (model.provider.toLowerCase()) {
+  switch (provider.toLowerCase()) {
     case 'openai':
       return executeOpenAITest(model, payload)
     case 'anthropic':
@@ -145,6 +150,8 @@ const executeModelTest = async (model: AIModel, payload: AttackPayload): Promise
       return executeMistralTest(model, payload)
     case 'xai':
       return executeXaiTest(model, payload)
+    case 'ollama':
+      return executeOllamaTest({ ...model, apiKey }, payload)
     default:
       return executeGenericTest(model, payload)
   }
@@ -364,6 +371,36 @@ const executeXaiTest = async (model: AIModel, payload: AttackPayload): Promise<s
     return data.choices[0]?.message?.content || 'No response received'
   } catch (error) {
     console.error('xAI test execution error:', error)
+    throw error
+  }
+}
+
+// Real Ollama API test execution
+const executeOllamaTest = async (model: AIModel, payload: AttackPayload): Promise<string> => {
+  try {
+    const host = model.apiKey ? model.apiKey : 'localhost'
+    const modelName = typeof model.model === 'string' ? model.model : ''
+    const prompt = typeof payload.payload === 'string' ? payload.payload : ''
+    const response = await fetch(`http://${host}:11434/api/generate`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        model: modelName,
+        prompt: prompt,
+        stream: false
+      })
+    })
+
+    if (!response.ok) {
+      throw new Error(`Ollama API error: ${response.status} ${response.statusText}`)
+    }
+
+    const data = await response.json()
+    return data.response || 'No response received'
+  } catch (error) {
+    console.error('Ollama test execution error:', error)
     throw error
   }
 }
