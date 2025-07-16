@@ -4,7 +4,8 @@
 
 [![Download for macOS](https://img.shields.io/badge/Download-macOS-000000?style=for-the-badge&logo=apple&logoColor=white)](https://github.com/preambleai/prompt-injector/releases/latest)
 [![Download for Windows](https://img.shields.io/badge/Download-Windows-0078D6?style=for-the-badge&logo=windows&logoColor=white)](https://github.com/preambleai/prompt-injector/releases/latest)
-[![Download for Linux](https://img.shields.io/badge/Download-Linux-FCC624?style=for-the-badge&logo=linux&logoColor=black)](https://github.com/preambleai/prompt-injector/releases/latest)
+
+> **Linux Users**: Pre-built Linux packages are not currently provided in releases. See the [Linux Build Instructions](#-linux-build-instructions) below to build your own package.
 
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Contributions Welcome](https://img.shields.io/badge/contributions-welcome-brightgreen.svg?style=flat)](CONTRIBUTING.md)
@@ -64,7 +65,6 @@ Prompt Injector is an open-source desktop application for AI security testing, d
 #### Option 1: Download Pre-built Binaries (Recommended)
 - **macOS**: [Download DMG](https://github.com/preambleai/prompt-injector/releases/latest/download/Prompt%20Injector-1.0.0-arm64.dmg)
 - **Windows**: [Download EXE](https://github.com/preambleai/prompt-injector/releases/latest/download/Prompt%20Injector%20Setup%201.0.0.exe)
-- **Linux**: [Download AppImage](https://github.com/preambleai/prompt-injector/releases/latest/download/Prompt%20Injector-1.0.0-arm64.AppImage)
 
 #### Option 2: Build from Source
 1. **Clone the repository**
@@ -91,8 +91,31 @@ Prompt Injector is an open-source desktop application for AI security testing, d
    # Or build for specific platform
    npm run dist:mac     # macOS
    npm run dist:win     # Windows
-   npm run dist:linux   # Linux
    ```
+
+#### 🐧 Linux Build Instructions
+
+Since pre-built Linux packages are not currently provided in releases due to system dependency variations, Linux users can build their own packages:
+
+1. **Install system dependencies** (Ubuntu/Debian):
+   ```bash
+   sudo apt-get update
+   sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.0-dev \
+     libayatana-appindicator3-dev librsvg2-dev libdrm-dev \
+     libxss1 libgconf-2-4 libxrandr2 libasound2-dev
+   ```
+
+2. **Follow the "Build from Source" steps above**, then:
+   ```bash
+   # Build Linux packages
+   npm run dist:linux
+   ```
+
+3. **Find your packages** in the `dist-electron/` directory:
+   - `*.AppImage` - Portable Linux application
+   - `*.deb` - Debian/Ubuntu package
+
+> **Note**: For other Linux distributions, install the equivalent packages for your package manager.
 
 ### Automated Builds with GitHub Actions
 
