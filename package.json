@@ -73,7 +73,7 @@
     "autoprefixer": "^10.4.14",
     "concurrently": "^8.2.2",
     "cypress": "^12.15.0",
-    "electron": "^25.0.0",
+    "electron": "^28.3.2",
     "electron-builder": "^24.0.0",
     "eslint": "^8.40.0",
     "eslint-config-prettier": "^8.8.0",
