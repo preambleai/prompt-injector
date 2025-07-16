@@ -15,6 +15,7 @@
     "electron": "electron .",
     "electron:dev": "electron . --dev",
     "dist": "npm run build && electron-builder",
+    "dist:all": "node scripts/build-all.js",
     "dist:win": "npm run build && electron-builder --win",
     "dist:mac": "npm run build && electron-builder --mac",
     "dist:linux": "npm run build && electron-builder --linux",
@@ -43,7 +44,10 @@
     "ai-security",
     "adversarial-testing"
   ],
-  "author": "Preamble, Inc.",
+  "author": {
+    "name": "Preamble, Inc.",
+    "email": "hello@preamble.com"
+  },
   "license": "Apache-2.0",
   "devDependencies": {
     "@testing-library/jest-dom": "^6.6.3",
@@ -201,8 +205,12 @@
       "dist-electron/**/*",
       "node_modules/**/*",
       "assets/**/*",
-      "models/**/*"
+      "models/**/*",
+      "!node_modules/sqlite3/build/**/*",
+      "!node_modules/better-sqlite3/build/**/*"
     ],
+    "npmRebuild": false,
+    "buildDependenciesFromSource": false,
     "mac": {
       "category": "public.app-category.developer-tools",
       "icon": "assets/icon.icns",
@@ -212,14 +220,14 @@
       ]
     },
     "win": {
-      "icon": "assets/icon.ico",
+      "icon": "assets/icon-256.png",
       "target": [
         "nsis",
         "portable"
       ]
     },
     "linux": {
-      "icon": "assets/icon.png",
+      "icon": "assets/icon-256.png",
       "target": [
         "AppImage",
         "deb"

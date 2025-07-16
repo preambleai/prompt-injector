@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Download Prompt Injector</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+        
+        .container {
+            max-width: 800px;
+            padding: 2rem;
+            text-align: center;
+        }
+        
+        .logo {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 2rem;
+            background: white;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            font-weight: bold;
+            color: #667eea;
+        }
+        
+        h1 {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            font-weight: 700;
+        }
+        
+        .subtitle {
+            font-size: 1.2rem;
+            margin-bottom: 3rem;
+            opacity: 0.9;
+        }
+        
+        .download-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+        
+        .download-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            padding: 2rem;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .download-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        }
+        
+        .platform-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            display: block;
+        }
+        
+        .platform-name {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+        
+        .file-info {
+            font-size: 0.9rem;
+            opacity: 0.8;
+            margin-bottom: 1.5rem;
+        }
+        
+        .download-btn {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+        
+        .download-btn:hover {
+            background: #45a049;
+        }
+        
+        .version-info {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 1rem;
+            margin-top: 2rem;
+            font-size: 0.9rem;
+        }
+        
+        .footer {
+            margin-top: 3rem;
+            opacity: 0.7;
+            font-size: 0.9rem;
+        }
+        
+        .footer a {
+            color: white;
+            text-decoration: none;
+        }
+        
+        .footer a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logo">PI</div>
+        <h1>Prompt Injector</h1>
+        <p class="subtitle">Advanced AI Security Testing Platform</p>
+        
+        <div class="download-grid">
+            <div class="download-card">
+                <span class="platform-icon">🍎</span>
+                <div class="platform-name">macOS</div>
+                <div class="file-info">Apple Silicon (M1/M2)<br>264 MB</div>
+                <a href="../dist-electron/Prompt Injector-1.0.0-arm64.dmg" class="download-btn">Download DMG</a>
+            </div>
+            
+            <div class="download-card">
+                <span class="platform-icon">🪟</span>
+                <div class="platform-name">Windows</div>
+                <div class="file-info">Installer & Portable<br>918 MB</div>
+                <a href="../dist-electron/Prompt Injector Setup 1.0.0.exe" class="download-btn">Download EXE</a>
+            </div>
+            
+            <div class="download-card">
+                <span class="platform-icon">🐧</span>
+                <div class="platform-name">Linux</div>
+                <div class="file-info">AppImage Format<br>7.7 GB</div>
+                <a href="../dist-electron/Prompt Injector-1.0.0-arm64.AppImage" class="download-btn">Download AppImage</a>
+            </div>
+        </div>
+        
+        <div class="version-info">
+            <strong>Version 1.0.0</strong> • Apache 2.0 License<br>
+            Desktop application for prompt injection testing and AI security research
+        </div>
+        
+        <div class="footer">
+            <p>
+                <a href="https://github.com/preambleai/prompt-injector">GitHub Repository</a> • 
+                <a href="mailto:hello@preamble.com">Support</a> • 
+                <a href="https://preamble.com">Preamble, Inc.</a>
+            </p>
+        </div>
+    </div>
+</body>
+</html> 

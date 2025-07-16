@@ -7,11 +7,11 @@
 
 **Copyright (c) 2025 Preamble, Inc. All rights reserved.**
 
-A cutting-edge AI security testing platform for detecting and mitigating prompt injection vulnerabilities in AI agent solutions. This open-source desktop application provides comprehensive vulnerability assessment and advanced attack simulation capabilities for AI security researchers and developers.
+An AI security testing platform for detecting and mitigating prompt injection vulnerabilities in AI agent solutions. This open-source desktop application provides comprehensive vulnerability assessment and advanced attack simulation capabilities for AI security researchers and developers.
 
 ## 🎯 About Prompt Injector
 
-Prompt Injector is the leading open-source desktop application for AI security testing, designed specifically for security researchers, penetration testers, and AI developers. The platform provides comprehensive prompt injection detection, jailbreak testing, and vulnerability assessment capabilities for all major AI systems and frameworks.
+Prompt Injector is an open-source desktop application for AI security testing, designed specifically for security researchers, penetration testers, and AI developers. The platform provides comprehensive prompt injection detection, jailbreak testing, and vulnerability assessment capabilities for popular LLMs.
 
 ## 🚀 Key Features
 
@@ -57,6 +57,12 @@ Prompt Injector is the leading open-source desktop application for AI security t
 
 ### Installation
 
+#### Option 1: Download Pre-built Binaries (Recommended)
+- **macOS**: [Download DMG](https://github.com/preambleai/prompt-injector/releases/latest/download/Prompt%20Injector-1.0.0-arm64.dmg)
+- **Windows**: [Download EXE](https://github.com/preambleai/prompt-injector/releases/latest/download/Prompt%20Injector%20Setup%201.0.0.exe)
+- **Linux**: [Download AppImage](https://github.com/preambleai/prompt-injector/releases/latest/download/Prompt%20Injector-1.0.0-arm64.AppImage)
+
+#### Option 2: Build from Source
 1. **Clone the repository**
    ```bash
    git clone https://github.com/preambleai/prompt-injector.git
@@ -73,16 +79,16 @@ Prompt Injector is the leading open-source desktop application for AI security t
    npm run dev
    ```
 
-4. **Build for production**
+4. **Build for distribution**
    ```bash
-   npm run build
-   npm run dist
+   # Build for all platforms
+   npm run dist:all
+
+   # Or build for specific platform
+   npm run dist:mac     # macOS
+   npm run dist:win     # Windows
+   npm run dist:linux   # Linux
    ```
-
-### Alternative: Download Pre-built Binaries
-
-- [macOS (Apple Silicon)](https://github.com/preambleai/prompt-injector/releases/latest/download/Prompt%20Injector-1.0.0-arm64.dmg)
-- [Windows](https://github.com/preambleai/prompt-injector/releases/latest/download/Prompt%20Injector%20Setup%201.0.0.exe)
 
 ## 🎯 Usage Guide
 
