@@ -11,12 +11,12 @@ import * as path from 'path'
 import aiAPIIntegration from '../services/ai-api-integration';
 import { AttackEngine } from './services/attack-engine';
 
-// Set development environment
-process.env['NODE_ENV'] = 'development'
-const isDev = process.env['NODE_ENV'] === 'development'
+// Set development environment properly
+const isDev = process.env.NODE_ENV === 'development' || !app.isPackaged
 
 console.log('Electron main process starting...')
-console.log('NODE_ENV:', process.env['NODE_ENV'])
+console.log('NODE_ENV:', process.env.NODE_ENV)
+console.log('app.isPackaged:', app.isPackaged)
 console.log('isDev:', isDev)
 
 // Initialize AttackEngine
@@ -187,7 +187,40 @@ function createWindow() {
     })
   } else {
     console.log('Production mode - loading from file...')
-    mainWindow?.loadFile(path.join(__dirname, '../index.html'))
+    const indexPath = app.isPackaged 
+      ? path.join(process.resourcesPath, 'app.asar', 'dist', 'index.html')
+      : path.join(__dirname, '../index.html')
+    
+    console.log('Loading index.html from:', indexPath)
+    console.log('app.isPackaged:', app.isPackaged)
+    console.log('process.resourcesPath:', process.resourcesPath)
+    console.log('__dirname:', __dirname)
+    
+    mainWindow?.loadFile(indexPath).catch(error => {
+      console.error('Failed to load index.html:', error)
+      // Try alternative paths if the primary one fails
+      const fallbackPath = path.join(__dirname, '../dist/index.html')
+      console.log('Trying fallback path:', fallbackPath)
+      mainWindow?.loadFile(fallbackPath).catch(fallbackError => {
+        console.error('Fallback path also failed:', fallbackError)
+        // Show error message to user
+        const errorHtml = `
+          <html>
+            <body style="font-family: Arial, sans-serif; padding: 20px; text-align: center;">
+              <h1>Failed to Load Application</h1>
+              <p>The application files could not be loaded.</p>
+              <p>Tried paths:</p>
+              <ul style="text-align: left; display: inline-block;">
+                <li>${indexPath}</li>
+                <li>${fallbackPath}</li>
+              </ul>
+              <button onclick="window.location.reload()">Retry</button>
+            </body>
+          </html>
+        `
+        mainWindow?.loadURL(`data:text/html,${encodeURIComponent(errorHtml)}`)
+      })
+    })
   }
 
   // Emitted when the window is closed
