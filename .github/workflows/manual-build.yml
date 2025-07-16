@@ -53,26 +53,42 @@ jobs:
     - name: Create app icons (macOS)
       if: matrix.platform == 'macos'
       run: |
-        mkdir -p build/icons
+        mkdir -p assets
         mkdir -p icon.iconset
-        cp "assets/images/preamble logo.png" icon.iconset/icon_512x512.png
+        if [ -f "assets/images/preamble logo.png" ]; then
+          cp "assets/images/preamble logo.png" icon.iconset/icon_512x512.png
+        elif [ -f "assets/icon-512.png" ]; then
+          cp "assets/icon-512.png" icon.iconset/icon_512x512.png
+        else
+          echo "No icon file found"
+          exit 1
+        fi
         sips -z 16 16 icon.iconset/icon_512x512.png --out icon.iconset/icon_16x16.png
         sips -z 32 32 icon.iconset/icon_512x512.png --out icon.iconset/icon_32x32.png
         sips -z 128 128 icon.iconset/icon_512x512.png --out icon.iconset/icon_128x128.png
         sips -z 256 256 icon.iconset/icon_512x512.png --out icon.iconset/icon_256x256.png
         iconutil -c icns icon.iconset
-        mv icon.icns build/icons/icon.icns
+        mv icon.icns assets/icon.icns
         
     - name: Create app icons (Windows/Linux)
       if: matrix.platform != 'macos'
       run: |
-        mkdir -p build/icons
+        mkdir -p assets
         node -e "
           const sharp = require('sharp');
-          sharp('assets/images/preamble logo.png')
+          const fs = require('fs');
+          let inputFile = 'assets/images/preamble logo.png';
+          if (!fs.existsSync(inputFile)) {
+            inputFile = 'assets/icon-512.png';
+          }
+          if (!fs.existsSync(inputFile)) {
+            console.error('No icon file found');
+            process.exit(1);
+          }
+          sharp(inputFile)
             .resize(256, 256)
             .png()
-            .toFile('build/icons/icon-256.png');
+            .toFile('assets/icon-256.png');
         "
         
     - name: Build for macOS
@@ -87,9 +103,20 @@ jobs:
       if: matrix.platform == 'linux'
       run: npm run dist:linux
         
+    - name: List build artifacts
+      run: |
+        echo "=== Build artifacts ==="
+        find dist-electron -type f -name "*.dmg" -o -name "*.exe" -o -name "*.AppImage" -o -name "*.deb" -o -name "*.zip" -o -name "*.msi" 2>/dev/null | sort || echo "No artifacts found"
+        
     - name: Upload artifacts
       uses: actions/upload-artifact@v4
       with:
         name: ${{ matrix.platform }}-installers
-        path: dist/*
+        path: |
+          dist-electron/*.dmg
+          dist-electron/*.exe
+          dist-electron/*.AppImage
+          dist-electron/*.deb
+          dist-electron/*.zip
+          dist-electron/*.msi
         retention-days: 5 
