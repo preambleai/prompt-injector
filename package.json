@@ -199,6 +199,7 @@
       "dist-electron/**/*",
       "node_modules/**/*",
       "assets/**/*",
+      "public/**/*",
       "models/**/*",
       "!node_modules/sqlite3/build/**/*",
       "!node_modules/better-sqlite3/build/**/*"
