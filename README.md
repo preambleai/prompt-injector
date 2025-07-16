@@ -80,8 +80,8 @@ Configure API keys in the app's Settings page after installation.
 ### Installation
 
 #### Option 1: Download Pre-built Binaries (Recommended)
-- **macOS**: [Download DMG](https://github.com/preambleai/prompt-injector/releases/latest/download/Prompt%20Injector-1.0.0-arm64.dmg)
-- **Windows**: [Download EXE](https://github.com/preambleai/prompt-injector/releases/latest/download/Prompt%20Injector%20Setup%201.0.0.exe)
+- **macOS**: [Download DMG](https://github.com/preambleai/prompt-injector/releases/latest)
+- **Windows**: [Download EXE](https://github.com/preambleai/prompt-injector/releases/latest)
 
 #### Option 2: Build from Source
 1. **Clone the repository**
