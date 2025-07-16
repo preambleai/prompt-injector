@@ -1,7 +1,12 @@
 # Prompt Injector
 
-[![Download for macOS (Apple Silicon)](https://img.shields.io/badge/Download-macOS%20(Apple%20Silicon)-blue?logo=apple)](https://github.com/preambleai/prompt-injector/releases/latest/download/Prompt%20Injector-1.0.0-arm64.dmg)
-[![Download for Windows](https://img.shields.io/badge/Download-Windows-green?logo=windows)](https://github.com/preambleai/prompt-injector/releases/latest/download/Prompt%20Injector%20Setup%201.0.0.exe)
+## 📥 Download
+
+[![Download for macOS](https://img.shields.io/badge/Download-macOS-000000?style=for-the-badge&logo=apple&logoColor=white)](https://github.com/preambleai/prompt-injector/releases/latest)
+[![Download for Windows](https://img.shields.io/badge/Download-Windows-0078D6?style=for-the-badge&logo=windows&logoColor=white)](https://github.com/preambleai/prompt-injector/releases/latest)
+[![Download for Linux](https://img.shields.io/badge/Download-Linux-FCC624?style=for-the-badge&logo=linux&logoColor=black)](https://github.com/preambleai/prompt-injector/releases/latest)
+
+> **Quick Downloads**: [macOS DMG](https://github.com/preambleai/prompt-injector/releases/latest/download/Prompt%20Injector-1.0.0-arm64.dmg) | [Windows EXE](https://github.com/preambleai/prompt-injector/releases/latest/download/Prompt%20Injector%20Setup%201.0.0.exe) | [Linux AppImage](https://github.com/preambleai/prompt-injector/releases/latest/download/Prompt%20Injector-1.0.0-arm64.AppImage)
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Contributions Welcome](https://img.shields.io/badge/contributions-welcome-brightgreen.svg?style=flat)](CONTRIBUTING.md)
 
@@ -89,6 +94,32 @@ Prompt Injector is an open-source desktop application for AI security testing, d
    npm run dist:win     # Windows
    npm run dist:linux   # Linux
    ```
+
+### Automated Builds with GitHub Actions
+
+This project uses GitHub Actions to automatically build installers for all platforms:
+
+- **🚀 Automatic Release Builds**: When you create a new release on GitHub, installers are automatically built and attached to the release
+- **🧪 Manual Test Builds**: You can manually trigger builds from the Actions tab to test specific platforms
+- **🌐 Multi-platform Support**: Builds simultaneously for macOS, Windows, and Linux
+
+#### Creating a Release
+1. Push your changes to the main branch
+2. Go to the GitHub repository
+3. Click "Releases" → "Create a new release"
+4. Tag the release (e.g., `v1.0.0`)
+5. Add release notes
+6. Click "Publish release"
+
+GitHub Actions will automatically build installers for all platforms and attach them to the release within ~10-15 minutes.
+
+#### Manual Build Testing
+From the GitHub repository:
+1. Go to the "Actions" tab
+2. Select "Manual Build Test"
+3. Click "Run workflow"
+4. Choose the platform to build for (or "all" for all platforms)
+5. Download the artifacts when the build completes
 
 ## 🎯 Usage Guide
 
