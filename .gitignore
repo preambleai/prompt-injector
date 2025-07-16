@@ -48,6 +48,10 @@ Desktop.ini
 
 
 
+# Icon generation temporary files
+icon.iconset/
+icon.icns
+
 # Optional: Uncomment if you want to ignore local database files
 # *.sqlite
 # *.db 

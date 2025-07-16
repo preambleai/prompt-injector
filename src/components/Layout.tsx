@@ -10,7 +10,7 @@ import React, { useState } from 'react'
 import { useLocation, Link } from 'react-router-dom'
 import { 
   Shield, Settings, BarChart3, Bug, FileText, ShieldCheck,
-  ChevronRight, Target, Network, Brain, Award, Layers, Zap, Wand2, Clock, ChevronsLeft, ChevronsRight
+  ChevronRight, Target, Network, Brain, Award, Layers, Zap, Wand2, Clock, ChevronsLeft, ChevronsRight, Users
 } from 'lucide-react'
 
 interface LayoutProps {
