@@ -6,7 +6,6 @@
 [![Download for Windows](https://img.shields.io/badge/Download-Windows-0078D6?style=for-the-badge&logo=windows&logoColor=white)](https://github.com/preambleai/prompt-injector/releases/latest)
 [![Download for Linux](https://img.shields.io/badge/Download-Linux-FCC624?style=for-the-badge&logo=linux&logoColor=black)](https://github.com/preambleai/prompt-injector/releases/latest)
 
-> **Quick Downloads**: [macOS DMG](https://github.com/preambleai/prompt-injector/releases/latest/download/Prompt%20Injector-1.0.0-arm64.dmg) | [Windows EXE](https://github.com/preambleai/prompt-injector/releases/latest/download/Prompt%20Injector%20Setup%201.0.0.exe) | [Linux AppImage](https://github.com/preambleai/prompt-injector/releases/latest/download/Prompt%20Injector-1.0.0-arm64.AppImage)
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Contributions Welcome](https://img.shields.io/badge/contributions-welcome-brightgreen.svg?style=flat)](CONTRIBUTING.md)
 
