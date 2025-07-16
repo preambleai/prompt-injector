@@ -1,4 +1,4 @@
-import { aiAPIIntegration, AIRequest } from './ai-api-integration'
+import aiAPIIntegration, { AIRequest } from './ai-api-integration';
 
 export interface SecurityScanResult {
   id: string;

@@ -6,8 +6,10 @@
  * Unauthorized copying or distribution of this file is prohibited.
  */
 
-import { app, BrowserWindow, Menu } from 'electron'
+import { app, BrowserWindow, Menu, ipcMain } from 'electron'
 import * as path from 'path'
+import aiAPIIntegration from '../services/ai-api-integration';
+import { AttackEngine } from './services/attack-engine';
 
 // Set development environment
 process.env['NODE_ENV'] = 'development'
@@ -16,6 +18,93 @@ const isDev = process.env['NODE_ENV'] === 'development'
 console.log('Electron main process starting...')
 console.log('NODE_ENV:', process.env['NODE_ENV'])
 console.log('isDev:', isDev)
+
+// Initialize AttackEngine
+const attackEngine = new AttackEngine()
+
+// Wrapper functions to match the expected interface
+const loadAttackPayloads = async () => {
+  return await attackEngine.getPayloads();
+};
+
+const executeTest = async (model: any, payload: any) => {
+  // Create a temporary test and run it
+  const testId = await attackEngine.createTest({
+    name: `Single Test - ${payload.name}`,
+    description: `Testing ${payload.name} against ${model.name}`,
+    targetModel: {
+      provider: model.provider,
+      model: model.model,
+      apiKey: model.apiKey,
+      endpoint: model.endpoint
+    },
+    payloads: [payload.id]
+  });
+  
+  const testResult = await attackEngine.runTest(testId);
+  const attackResult = testResult.results[0];
+  
+  // Handle case where no result is returned
+  if (!attackResult) {
+    return {
+      id: `${model.id}-${payload.id}-${Date.now()}`,
+      timestamp: new Date().toISOString(),
+      model: model,
+      payload: payload,
+      response: 'No result returned',
+      vulnerability: false,
+      confidence: 0,
+      detectionMethod: 'no-result',
+      duration: 0,
+      success: false,
+      error: 'No result returned from attack engine',
+      executionTime: 0,
+      metadata: {
+        modelProvider: model.provider,
+        payloadCategory: payload.category || 'unknown',
+        payloadSeverity: payload.severity || 'low'
+      }
+    };
+  }
+  
+  // Convert AttackResult to TestResult format
+  return {
+    id: `${model.id}-${payload.id}-${Date.now()}`,
+    timestamp: new Date().toISOString(),
+    model: model,
+    payload: payload,
+    response: attackResult.response || '',
+    vulnerability: attackResult.success,
+    confidence: attackResult.success ? 0.8 : 0.2,
+    detectionMethod: attackResult.success ? 'attack-success' : 'attack-failed',
+    duration: 0,
+    success: !attackResult.error,
+    error: attackResult.error,
+    executionTime: 0,
+    metadata: {
+      modelProvider: model.provider,
+      payloadCategory: attackResult.category,
+      payloadSeverity: attackResult.severity
+    }
+  };
+};
+
+const executeTestSuite = async (models: any[], payloads: any[], config: any) => {
+  const results = [];
+  
+  for (const model of models) {
+    if (model.enabled && config.selectedModels.includes(model.id)) {
+      for (const payload of payloads) {
+        if (config.selectedPayloads.includes(payload.id)) {
+          const result = await executeTest(model, payload);
+          results.push(result);
+        }
+      }
+    }
+  }
+  
+  return results;
+};
 
 let mainWindow: BrowserWindow | null = null
 
@@ -60,19 +149,19 @@ function createWindow() {
       }
     }
 
-    // Try port 3001 first (where Vite is running), then 3000
-    tryLoadURL(3001).then(success => {
+    // Try port 3000 first (where Vite is configured), then 3001
+    tryLoadURL(3000).then(success => {
       if (!success) {
-        console.log('Port 3001 failed, trying port 3000...')
-        tryLoadURL(3000).then(success2 => {
+        console.log('Port 3000 failed, trying port 3001...')
+        tryLoadURL(3001).then(success2 => {
           if (!success2) {
-            console.error('Failed to load from both ports 3001 and 3000')
+            console.error('Failed to load from both ports 3000 and 3001')
             // Show an error message to the user
             const errorHtml = `
               <html>
                 <body style="font-family: Arial, sans-serif; padding: 20px; text-align: center;">
                   <h1>Development Server Not Found</h1>
-                  <p>Please make sure the Vite dev server is running on port 3001 or 3000</p>
+                  <p>Please make sure the Vite dev server is running on port 3000 or 3001</p>
                   <p>Run: <code>npm run dev:renderer</code> in another terminal</p>
                   <button onclick="window.location.reload()">Retry</button>
                 </body>
@@ -210,3 +299,164 @@ if (process.platform === 'darwin') {
 
 const menu = Menu.buildFromTemplate(template)
 Menu.setApplicationMenu(menu) 
+
+ipcMain.handle('llm-request', async (_event, request) => {
+  try {
+    const response = await aiAPIIntegration.makeRequest(request);
+    return response;
+  } catch (error) {
+    let message = 'LLM request failed';
+    if (error && typeof error === 'object' && 'message' in error) {
+      message = (error as any).message;
+    } else if (typeof error === 'string') {
+      message = error;
+    }
+    return { error: message };
+  }
+}); 
+
+ipcMain.handle('make-ai-request', async (_event, request) => {
+  try {
+    const response = await aiAPIIntegration.makeRequest(request);
+    return response;
+  } catch (error) {
+    let message = 'AI request failed';
+    if (error && typeof error === 'object' && 'message' in error) {
+      message = (error as any).message;
+    } else if (typeof error === 'string') {
+      message = error;
+    }
+    return { error: message };
+  }
+});
+
+ipcMain.handle('get-available-models', async (_event, provider, apiKey) => {
+  try {
+    const models = await aiAPIIntegration.getAvailableModels(provider, apiKey);
+    return models;
+  } catch (error) {
+    console.error(`Error getting available models for ${provider}:`, error);
+    // Return empty array for now, but log the specific error for debugging
+    if (provider === 'ollama') {
+      console.log('💡 Make sure Ollama is running: ollama serve');
+    }
+    return [];
+  }
+});
+
+ipcMain.handle('test-ollama-connection', async (_event) => {
+  try {
+    const isConnected = await aiAPIIntegration.testOllamaConnection();
+    return isConnected;
+  } catch (error) {
+    console.error('Error testing Ollama connection:', error);
+    return false;
+  }
+}); 
+
+ipcMain.handle('execute-test', async (_event, model, payload) => {
+  return await executeTest(model, payload);
+});
+ipcMain.handle('execute-test-suite', async (_event, models, payloads, config) => {
+  return await executeTestSuite(models, payloads, config);
+});
+ipcMain.handle('load-attack-payloads', async () => {
+  return await loadAttackPayloads();
+}); 
+
+ipcMain.handle('test-model-connection', async (_event, model) => {
+  // Create a simple test payload
+  const testPayload = "Hello, this is a connection test. Please respond with 'Connection successful' if you can see this message.";
+  const testAttack = {
+    id: 'connection-test',
+    name: 'Connection Test',
+    description: 'Test connection to AI model',
+    category: 'TEST',
+    payload: testPayload,
+    severity: 'LOW',
+    tags: ['test'],
+    source: 'internal'
+  };
+  try {
+    const result = await executeTest(model, testAttack);
+    if (result.success) {
+      return { success: true };
+    } else {
+      return { success: false, error: result.error || 'Test failed' };
+    }
+  } catch (error) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error'
+    };
+  }
+}); 
+
+ipcMain.handle('execute-red-team-attack', async (_event, model, attack) => {
+  // Compose the attack payload
+  const attackPayload = {
+    id: attack.id,
+    name: attack.name,
+    description: attack.description,
+    category: attack.category,
+    payload: attack.payload,
+    tags: [attack.category],
+    source: 'red-team'
+  };
+  try {
+    const result = await executeTest(model, attackPayload);
+    // Analyze response for extraction attempts
+    // (You may want to move analyzeExtractionAttempt and extractInformation to a shared file if needed)
+    const extractionAttempt = (result.response && attack.successIndicators) ? attack.successIndicators.some((indicator: string) => result.response.toLowerCase().includes(indicator.toLowerCase())) : false;
+    const extractedInfo = {}; // Optionally implement extraction logic here
+    return {
+      ...result,
+      attackType: attack.category,
+      extractionAttempt,
+      extractedInfo
+    };
+  } catch (error) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error'
+    };
+  }
+}); 
+
+ipcMain.handle('execute-benchmark-test', async (_event, model, benchmark, payload) => {
+  // Compose the attack payload for benchmark testing
+  const attackPayload = {
+    id: payload.id,
+    name: payload.name,
+    description: payload.description,
+    category: payload.category,
+    payload: payload.payload,
+    severity: payload.severity,
+    tags: payload.tags,
+    source: `benchmark-${benchmark.id}`
+  };
+  try {
+    const result = await executeTest(model, attackPayload);
+    // Calculate benchmark-specific metrics
+    const actualOutcome = result.vulnerability ? 'success' : 'failure';
+    // You may want to move these helpers to a shared file if needed
+    const score = result.confidence * 100;
+    const performance = {
+      recall: 0, precision: 0, f1Score: 0, falsePositiveRate: 0, falseNegativeRate: 0 // Placeholder
+    };
+    return {
+      ...result,
+      benchmarkId: benchmark.id,
+      metricName: payload.name,
+      expectedOutcome: payload.expectedOutcome,
+      actualOutcome,
+      score,
+      performance
+    };
+  } catch (error) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error'
+    };
+  }
+}); 

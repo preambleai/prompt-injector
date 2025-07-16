@@ -12,7 +12,7 @@ import {
   Trash2,
   Play
 } from 'lucide-react'
-import { aiAPIIntegration, AIModel } from '@/services/ai-api-integration'
+import { AIModel } from '../types';
 
 // Type definitions
 interface AIProviderConfig {
@@ -61,7 +61,7 @@ const AIProviderManager: React.FC<AIProviderManagerProps> = ({ onProviderUpdate 
 
   const checkOllamaStatus = async () => {
     try {
-      const isAvailable = await aiAPIIntegration.testOllamaConnection()
+      const isAvailable = await window.electronAPI.testOllamaConnection()
       setOllamaStatus(isAvailable)
       onProviderUpdate?.({ ollama: isAvailable })
     } catch (error) {
@@ -74,7 +74,7 @@ const AIProviderManager: React.FC<AIProviderManagerProps> = ({ onProviderUpdate 
   const loadAvailableModels = async () => {
     setLoadingModels(true)
     try {
-      const models = await aiAPIIntegration.getAvailableModels('ollama')
+      const models = await window.electronAPI.getAvailableModels('ollama')
       const modelNames = models.map((model: AIModel) => model.name)
       setAvailableModels(modelNames)
       
@@ -98,13 +98,13 @@ const AIProviderManager: React.FC<AIProviderManagerProps> = ({ onProviderUpdate 
   const testOllamaConnection = async () => {
     setTestingOllama(true)
     try {
-      const isAvailable = await aiAPIIntegration.testOllamaConnection()
+      const isAvailable = await window.electronAPI.testOllamaConnection()
       setOllamaStatus(isAvailable)
       onProviderUpdate?.({ ollama: isAvailable })
       
       if (isAvailable) {
         // Test with a simple request
-        const response = await aiAPIIntegration.makeRequest({
+        const response = await window.electronAPI.makeAIRequest({
           provider: 'ollama',
           model: selectedModel,
           prompt: 'Hello, this is a test message.',

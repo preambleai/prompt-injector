@@ -2,10 +2,11 @@
   "name": "prompt-injector",
   "version": "1.0.0",
   "description": "Cutting-edge AI Security Testing Platform for Prompt Injection Detection and Defense",
-  "main": "dist/main.js",
+  "main": "dist/main/main.js",
   "homepage": "./",
   "scripts": {
-    "dev": "concurrently \"npm run dev:renderer\" \"npm run dev:main\"",
+    "dev:ollama": "node scripts/start-ollama.js",
+    "dev": "concurrently \"npm run dev:ollama\" \"npm run dev:renderer\" \"npm run dev:main\"",
     "dev:renderer": "vite",
     "dev:main": "tsc -p tsconfig.main.json && electron .",
     "build": "npm run build:renderer && npm run build:main",
@@ -43,7 +44,7 @@
     "adversarial-testing"
   ],
   "author": "Preamble, Inc.",
-  "license": "MIT",
+  "license": "Apache-2.0",
   "devDependencies": {
     "@testing-library/jest-dom": "^6.6.3",
     "@types/bcryptjs": "^2.4.2",
@@ -132,6 +133,7 @@
     "jsonwebtoken": "^9.0.0",
     "jspdf": "^3.0.1",
     "langchain": "^0.0.200",
+    "litellm": "^0.12.0",
     "lodash": "^4.17.21",
     "lucide-react": "^0.263.0",
     "merge-descriptors": "^1.0.1",

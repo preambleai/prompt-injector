@@ -10,6 +10,8 @@ import { useState, useEffect } from 'react'
 import { Search, Filter, Download, Eye, Copy, AlertTriangle, CheckCircle, Clock, TrendingUp } from 'lucide-react'
 import { AttackPayload } from '../types'
 import { payloadManager, PayloadFilter, PayloadCategory } from '../services/payload-manager'
+import AdvancedPayloadModal from './AdvancedPayloadModal';
+import { v4 as uuidv4 } from 'uuid';
 
 interface PayloadBrowserProps {
   onPayloadSelect?: (payload: AttackPayload) => void
@@ -28,6 +30,7 @@ export const PayloadBrowser = ({ onPayloadSelect, showStats = true, maxHeight = 
   const [selectedSource, setSelectedSource] = useState<string>('all')
   const [showFilters, setShowFilters] = useState(false)
   const [stats, setStats] = useState<any>(null)
+  const [showAdvancedModal, setShowAdvancedModal] = useState(false);
 
   useEffect(() => {
     loadData()
@@ -120,6 +123,47 @@ export const PayloadBrowser = ({ onPayloadSelect, showStats = true, maxHeight = 
     }
   }
 
+  const handleCreateAdvancedPayload = (modalPayload: any) => {
+    // Construct AttackPayload
+    const id = uuidv4();
+    const now = new Date().toISOString();
+    const attackType = modalPayload.attackType;
+    const fields = modalPayload.fields || {};
+    const encodings = modalPayload.encodings || [];
+    const preview = modalPayload.preview || '';
+    // Compose name and description from fields
+    const name = fields.name || `${attackType} Payload (${now})`;
+    const description = fields.description || `Created via Advanced Payload Modal (${attackType})`;
+    const payload = preview || fields.payload || '';
+    const category = attackType.toLowerCase().replace(/ /g, '-');
+    const tags = [attackType, ...encodings];
+    const toKeywordArray = (val: any) => {
+      if (val === undefined || val === null) return [];
+      if (Array.isArray(val)) return val;
+      if (typeof val === 'string') return val.split(',').map((k: string) => k.trim()).filter((k: string) => k);
+      return [];
+    };
+    const newPayload = {
+      id,
+      name,
+      description,
+      category,
+      payload,
+      tags,
+      source: 'AI Generated',
+      isEditable: true,
+      lastModified: now,
+      createdBy: 'user',
+      expectedOutput: fields.expectedOutput || '',
+      successKeywords: toKeywordArray(String(fields.successKeywords ?? '')),
+      failureKeywords: toKeywordArray(String(fields.failureKeywords ?? '')),
+    };
+    payloadManager.savePayload(newPayload);
+    setShowAdvancedModal(false);
+    // Reload payloads
+    loadData();
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center p-8">
@@ -131,6 +175,21 @@ export const PayloadBrowser = ({ onPayloadSelect, showStats = true, maxHeight = 
 
   return (
     <div className="space-y-4">
+      {/* Advanced Payload Modal Trigger */}
+      <div className="flex justify-end">
+        <button
+          onClick={() => setShowAdvancedModal(true)}
+          className="px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700 transition-colors"
+        >
+          + Create Advanced Payload
+        </button>
+      </div>
+      {showAdvancedModal && (
+        <AdvancedPayloadModal
+          onClose={() => setShowAdvancedModal(false)}
+          onCreate={handleCreateAdvancedPayload}
+        />
+      )}
       {/* Stats Overview */}
       {showStats && stats && (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -318,8 +377,8 @@ export const PayloadBrowser = ({ onPayloadSelect, showStats = true, maxHeight = 
                       
                       <div className="flex flex-wrap gap-1">
                         {payload.tags.map((tag, index) => (
-                          <span key={index} className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
-                            {tag}
+                          <span key={String(index)} className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
+                            {tag || ''}
                           </span>
                         ))}
                       </div>

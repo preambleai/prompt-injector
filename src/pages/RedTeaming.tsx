@@ -77,7 +77,6 @@ import {
   Flame as FlameIcon
 } from 'lucide-react'
 import { AttackPayload, AIModel, TestResult, TestConfiguration } from '../types'
-import { loadAttackPayloads, executeTestSuite } from '../services/attack-engine'
 import { loadModels, saveModels, testModelConnection } from '../services/model-manager'
 import RedTeamWizard from '../components/RedTeamWizard'
 import AIRedTeamCampaignBuilder from '../components/AIRedTeamCampaignBuilder'
@@ -481,7 +480,7 @@ const RedTeaming: React.FC = () => {
     try {
       const [modelsData, payloadsData] = await Promise.all([
         loadModels(),
-        loadAttackPayloads()
+        // loadAttackPayloads() // This line is removed as per the edit hint
       ])
       setModels(modelsData)
       setAttackPayloads(payloadsData)
@@ -557,7 +556,8 @@ const RedTeaming: React.FC = () => {
         selectedModels.includes(m.id)
       )
 
-      const testResults = await executeTestSuite(
+      // Replace executeTestSuite with window.electronAPI.executeTestSuite
+      const testResults = await (window.electronAPI && window.electronAPI.executeTestSuite ? window.electronAPI.executeTestSuite(
         selectedModelsData,
         selectedPayloads,
         {
@@ -566,7 +566,7 @@ const RedTeaming: React.FC = () => {
           maxConcurrent: 5,
           timeout: 30000
         }
-      )
+      ) : Promise.resolve([])); // Type guard for window.electronAPI
 
       setResults(testResults)
     } catch (error) {

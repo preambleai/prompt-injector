@@ -2,9 +2,11 @@ import { EventEmitter } from 'events'
 import * as fs from 'fs'
 import * as path from 'path'
 import { ipcMain } from 'electron'
+import aiAPIIntegration from '../../services/ai-api-integration';
+import { AIRequest } from '../../types';
 
 // Import attack payloads
-const payloadsPath = path.join(__dirname, '../../assets/payloads/owasp-llm01-llm10.json')
+const payloadsPath = path.join(__dirname, '../../../public/assets/payloads/all-attack-payloads.json')
 const attackPayloads = JSON.parse(fs.readFileSync(payloadsPath, 'utf8'))
 
 export interface AttackPayload {
@@ -155,176 +157,26 @@ export class AttackEngine extends EventEmitter {
 
   private async executeAttack(targetModel: AIModelConfig, payload: string): Promise<{ success: boolean; response?: string; error?: string }> {
     try {
-      let response: string
-      
-      switch (targetModel.provider) {
-        case 'openai':
-          response = await this.callOpenAI(targetModel, payload)
-          break
-        case 'anthropic':
-          response = await this.callAnthropic(targetModel, payload)
-          break
-        case 'google':
-          response = await this.callGoogle(targetModel, payload)
-          break
-        case 'azure':
-          response = await this.callAzureOpenAI(targetModel, payload)
-          break
-        default:
-          throw new Error(`Unsupported provider: ${targetModel.provider}`)
-      }
-
-      // Analyze response for attack success
-      const success = this.analyzeAttackSuccess(response, payload)
-      
-      return {
-        success,
-        response
-      }
+      const apiKey = targetModel.apiKey || '';
+      const aiRequest: AIRequest = {
+        provider: targetModel.provider,
+        model: targetModel.model,
+        prompt: payload,
+        maxTokens: 1000,
+        temperature: 0.7,
+        systemPrompt: 'You are a helpful AI assistant. Please respond to user queries.',
+        metadata: { apiKey }
+      };
+      const aiResponse = await aiAPIIntegration.makeRequest(aiRequest);
+      const response = aiResponse.content;
+      const success = this.analyzeAttackSuccess(response, payload);
+      return { success, response };
     } catch (error) {
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Unknown error'
-      }
+      };
     }
-  }
-
-  private async callOpenAI(config: AIModelConfig, payload: string): Promise<string> {
-    if (!config.apiKey) {
-      throw new Error('OpenAI API key required')
-    }
-
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${config.apiKey}`
-      },
-      body: JSON.stringify({
-        model: config.model,
-        messages: [
-          {
-            role: 'system',
-            content: 'You are a helpful AI assistant. Please respond to user queries.'
-          },
-          {
-            role: 'user',
-            content: payload
-          }
-        ],
-        max_tokens: 1000,
-        temperature: 0.7
-      })
-    })
-
-    if (!response.ok) {
-      throw new Error(`OpenAI API error: ${response.status} ${response.statusText}`)
-    }
-
-    const data = await response.json() as any
-    return data.choices[0]?.message?.content || 'No response'
-  }
-
-  private async callAnthropic(config: AIModelConfig, payload: string): Promise<string> {
-    if (!config.apiKey) {
-      throw new Error('Anthropic API key required')
-    }
-
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': config.apiKey,
-        'anthropic-version': '2023-06-01'
-      },
-      body: JSON.stringify({
-        model: config.model,
-        max_tokens: 1000,
-        messages: [
-          {
-            role: 'user',
-            content: payload
-          }
-        ]
-      })
-    })
-
-    if (!response.ok) {
-      throw new Error(`Anthropic API error: ${response.status} ${response.statusText}`)
-    }
-
-    const data = await response.json() as any
-    return data.content[0]?.text || 'No response'
-  }
-
-  private async callGoogle(config: AIModelConfig, payload: string): Promise<string> {
-    if (!config.apiKey) {
-      throw new Error('Google API key required')
-    }
-
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${config.model}:generateContent?key=${config.apiKey}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        contents: [
-          {
-            parts: [
-              {
-                text: payload
-              }
-            ]
-          }
-        ],
-        generationConfig: {
-          maxOutputTokens: 1000,
-          temperature: 0.7
-        }
-      })
-    })
-
-    if (!response.ok) {
-      throw new Error(`Google API error: ${response.status} ${response.statusText}`)
-    }
-
-    const data = await response.json() as any
-    return data.candidates[0]?.content?.parts[0]?.text || 'No response'
-  }
-
-  private async callAzureOpenAI(config: AIModelConfig, payload: string): Promise<string> {
-    if (!config.apiKey || !config.endpoint) {
-      throw new Error('Azure OpenAI API key and endpoint required')
-    }
-
-    const response = await fetch(`${config.endpoint}/openai/deployments/${config.model}/chat/completions?api-version=2023-12-01-preview`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'api-key': config.apiKey
-      },
-      body: JSON.stringify({
-        messages: [
-          {
-            role: 'system',
-            content: 'You are a helpful AI assistant. Please respond to user queries.'
-          },
-          {
-            role: 'user',
-            content: payload
-          }
-        ],
-        max_tokens: 1000,
-        temperature: 0.7
-      })
-    })
-
-    if (!response.ok) {
-      throw new Error(`Azure OpenAI API error: ${response.status} ${response.statusText}`)
-    }
-
-    const data = await response.json() as any
-    return data.choices[0]?.message?.content || 'No response'
   }
 
   private analyzeAttackSuccess(response: string, payload: string): boolean {

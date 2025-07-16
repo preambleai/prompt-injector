@@ -35,30 +35,33 @@ class ConfigManager {
   }
 
   private loadConfig(): AppConfig {
+    const env = import.meta.env;
+    const isProd = env.MODE === 'production';
     return {
-      environment: process.env.REACT_APP_ENVIRONMENT || 'development',
-      apiBaseUrl: process.env.REACT_APP_API_BASE_URL || 'http://localhost:3001',
-      enableAnalytics: process.env.REACT_APP_ENABLE_ANALYTICS === 'true',
-      enableHttps: process.env.REACT_APP_ENABLE_HTTPS === 'true',
-      sessionTimeout: parseInt(process.env.REACT_APP_SESSION_TIMEOUT || '3600'),
-      enableLiveTesting: process.env.REACT_APP_ENABLE_LIVE_TESTING !== 'false',
-      enableBatchTesting: process.env.REACT_APP_ENABLE_BATCH_TESTING !== 'false',
-      enableSecurityScanning: process.env.REACT_APP_ENABLE_SECURITY_SCANNING !== 'false',
-      defaultRateLimitPerMinute: parseInt(process.env.REACT_APP_DEFAULT_RATE_LIMIT_PER_MINUTE || '60'),
-      defaultRateLimitPerHour: parseInt(process.env.REACT_APP_DEFAULT_RATE_LIMIT_PER_HOUR || '1000'),
-      defaultRateLimitPerDay: parseInt(process.env.REACT_APP_DEFAULT_RATE_LIMIT_PER_DAY || '10000'),
-      cacheTtl: parseInt(process.env.REACT_APP_CACHE_TTL || '300000'),
-      enableCaching: process.env.REACT_APP_ENABLE_CACHING !== 'false',
-      logLevel: process.env.REACT_APP_LOG_LEVEL || 'info',
-      enableDebugLogging: process.env.REACT_APP_ENABLE_DEBUG_LOGGING === 'true'
+      environment: env.VITE_ENVIRONMENT || (isProd ? 'production' : 'development'),
+      apiBaseUrl: env.VITE_API_BASE_URL || (isProd ? '/api' : 'http://localhost:3001'),
+      enableAnalytics: env.VITE_ENABLE_ANALYTICS === 'true',
+      enableHttps: env.VITE_ENABLE_HTTPS === 'true',
+      sessionTimeout: parseInt(env.VITE_SESSION_TIMEOUT || '3600'),
+      enableLiveTesting: env.VITE_ENABLE_LIVE_TESTING !== 'false',
+      enableBatchTesting: env.VITE_ENABLE_BATCH_TESTING !== 'false',
+      enableSecurityScanning: env.VITE_ENABLE_SECURITY_SCANNING !== 'false',
+      defaultRateLimitPerMinute: parseInt(env.VITE_DEFAULT_RATE_LIMIT_PER_MINUTE || '60'),
+      defaultRateLimitPerHour: parseInt(env.VITE_DEFAULT_RATE_LIMIT_PER_HOUR || '1000'),
+      defaultRateLimitPerDay: parseInt(env.VITE_DEFAULT_RATE_LIMIT_PER_DAY || '10000'),
+      cacheTtl: parseInt(env.VITE_CACHE_TTL || '300000'),
+      enableCaching: env.VITE_ENABLE_CACHING !== 'false',
+      logLevel: env.VITE_LOG_LEVEL || 'info',
+      enableDebugLogging: env.VITE_ENABLE_DEBUG_LOGGING === 'true'
     }
   }
 
   private loadAPIKeys(): APIKeys {
+    const env = import.meta.env;
     return {
-      openai: process.env.REACT_APP_OPENAI_API_KEY,
-      anthropic: process.env.REACT_APP_ANTHROPIC_API_KEY,
-      googleGemini: process.env.REACT_APP_GOOGLE_GEMINI_API_KEY
+      openai: env.VITE_OPENAI_API_KEY,
+      anthropic: env.VITE_ANTHROPIC_API_KEY,
+      googleGemini: env.VITE_GOOGLE_GEMINI_API_KEY
     }
   }
 

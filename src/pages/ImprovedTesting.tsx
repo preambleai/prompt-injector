@@ -72,7 +72,6 @@ import {
   Building
 } from 'lucide-react'
 import { AttackPayload, AIModel, TestResult, TestConfiguration } from '../types'
-import { loadAttackPayloads, executeTestSuite } from '../services/attack-engine'
 import { loadModels, saveModels, testModelConnection } from '../services/model-manager'
 import { MCPTestingManager, MCPTestConfig, MCPTestResult } from '../services/mcp-testing'
 import { AgentFrameworkTestingManager, AgentTestConfig, AgentTestResult } from '../services/agent-framework-testing'
@@ -287,7 +286,7 @@ const ImprovedTesting: React.FC = () => {
     setIsLoading(true)
     try {
       const [payloadsData, modelsData] = await Promise.all([
-        loadAttackPayloads(),
+        window.electronAPI.loadAttackPayloads(),
         Promise.resolve(loadModels())
       ])
       setPayloads(payloadsData)
@@ -374,7 +373,12 @@ const ImprovedTesting: React.FC = () => {
             timeout: configuration.timeout
           }
           
-          testResults = await executeTestSuite(testConfig)
+          if (window.electronAPI && window.electronAPI.executeTestSuite) {
+            testResults = await window.electronAPI.executeTestSuite(testConfig)
+          } else {
+            console.error('executeTestSuite not available in electronAPI')
+            return
+          }
           break
           
         case 'ai-agent':

@@ -8,12 +8,13 @@
  */
 
 import React, { useState, useEffect, useMemo } from 'react'
-import { Play, ChevronLeft, ChevronRight, Info, Search, ChevronDown, Copy } from 'lucide-react'
+import { Play, ChevronLeft, ChevronRight, Info, Search, ChevronDown, Copy, CheckCircle, Target, Zap, AlertCircle, Shield, Users, Database, Eye } from 'lucide-react'
 import { loadModels } from '../services/model-manager'
 import { payloadManager } from '../services/payload-manager'
 import { AttackPayload } from '../types'
-import { executeTest } from '../services/attack-engine'
 import { useNavigate } from 'react-router-dom'
+import { configManager } from '../services/config-manager'
+import { getAPIKeyForModel } from '../services/model-manager'
 
 interface TestResult {
   id: string
@@ -58,7 +59,7 @@ const LLM_ATTACK_CATEGORIES = [
     description: 'Override or manipulate system instructions to change model behavior.',
     color: 'bg-blue-100 border-blue-400',
     icon: '📝',
-    match: (p: AttackPayload) => /injection/i.test(p.category) && !/leak|jailbreak/i.test(p.category),
+    match: (p: AttackPayload) => /injection/i.test(p.category || '') && !/leak|jailbreak/i.test(p.category || ''),
   },
   {
     id: 'jailbreak',
@@ -66,7 +67,7 @@ const LLM_ATTACK_CATEGORIES = [
     description: 'Bypass safety guardrails and alignment to elicit unsafe or policy-violating outputs.',
     color: 'bg-red-100 border-red-400',
     icon: '🔓',
-    match: (p: AttackPayload) => /jailbreak|role|pretend|social/i.test(p.category),
+    match: (p: AttackPayload) => /jailbreak|role|pretend|social/i.test(p.category || ''),
   },
   {
     id: 'data-leakage',
@@ -74,7 +75,7 @@ const LLM_ATTACK_CATEGORIES = [
     description: 'Extract system prompts, training data, or sensitive information from the model.',
     color: 'bg-yellow-100 border-yellow-400',
     icon: '🔍',
-    match: (p: AttackPayload) => /leak|extract|disclos|history/i.test(p.category),
+    match: (p: AttackPayload) => /leak|extract|disclos|history/i.test(p.category || ''),
   },
   {
     id: 'hallucination',
@@ -82,7 +83,7 @@ const LLM_ATTACK_CATEGORIES = [
     description: 'Induce the model to generate plausible but false or misleading content.',
     color: 'bg-purple-100 border-purple-400',
     icon: '🧠',
-    match: (p: AttackPayload) => /hallucinat|fabricat|misinfo|confiden/i.test(p.category),
+    match: (p: AttackPayload) => /hallucinat|fabricat|misinfo|confiden/i.test(p.category || ''),
   },
   {
     id: 'resource-abuse',
@@ -90,7 +91,7 @@ const LLM_ATTACK_CATEGORIES = [
     description: 'Waste computational resources or cause denial of service via prompt abuse.',
     color: 'bg-green-100 border-green-400',
     icon: '⚡',
-    match: (p: AttackPayload) => /resource|token|rate|cost|bomb/i.test(p.category),
+    match: (p: AttackPayload) => /resource|token|rate|cost|bomb/i.test(p.category || ''),
   },
 ]
 
@@ -116,6 +117,8 @@ const Assessment = () => {
   const [activeCatId, setActiveCatId] = useState<string>('');
   const [catSearch, setCatSearch] = useState('')
   const [expandedRow, setExpandedRow] = useState<string | null>(null)
+  // Add state for error
+  const [error, setError] = useState<string | null>(null);
 
   // Move categorizedPayloads here and use useMemo
   const categorizedPayloads = useMemo(() =>
@@ -137,14 +140,25 @@ const Assessment = () => {
     loadData()
   }, [])
 
+  // Ensure only unique model IDs are shown
+  const uniqueAvailableModels = useMemo(() => {
+    const seen = new Set();
+    return availableModels.filter(model => {
+      const id = model.id || '';
+      if (seen.has(id)) return false;
+      seen.add(id);
+      return true;
+    });
+  }, [availableModels]);
+
   const loadData = async () => {
     try {
       const [models, payloads] = await Promise.all([
         loadModels(),
         payloadManager.loadAllPayloads()
       ])
-      // Only show models that are enabled by the user, including Ollama
-      setAvailableModels(models.filter(m => m.enabled && m.model && m.provider))
+      // Show all models added by the user, regardless of enabled status
+      setAvailableModels(models.filter(m => (m.model || '') && (m.provider || '')))
       setAvailablePayloads(payloads)
     } catch (error) {
       console.error('Failed to load data:', error)
@@ -192,13 +206,13 @@ const Assessment = () => {
 
   // --- Handler for select by category (from dropdown) ---
   const handleSelectCategory = (cat: string) => {
-    const ids = filteredPayloads.filter(p => p.category === cat).map(p => p.id)
+    const ids = filteredPayloads.filter(p => (p.category || '') === cat).map(p => p.id)
     setSelectedPayloads(prev => Array.from(new Set([...prev, ...ids])))
   }
 
   // --- Handler for deselect by category (from dropdown) ---
   const handleDeselectCategory = (cat: string) => {
-    const ids = filteredPayloads.filter(p => p.category === cat).map(p => p.id)
+    const ids = filteredPayloads.filter(p => (p.category || '') === cat).map(p => p.id)
     setSelectedPayloads(prev => prev.filter(id => !ids.includes(id)))
   }
 
@@ -206,6 +220,7 @@ const Assessment = () => {
     setIsRunning(true)
     setProgress(0)
     setTestResults([])
+    setError(null); // Clear previous errors
 
     const totalTests = selectedModel ? selectedPayloads.length : 0
     let completedTests = 0
@@ -216,27 +231,43 @@ const Assessment = () => {
       return
     }
 
-    const model = availableModels.find(m => m.id === selectedModel)
+    let model = availableModels.find(m => (m.id || '') === (selectedModel || ''))
     if (!model) {
       alert('Selected model not found.')
       setIsRunning(false)
       return
     }
 
-    for (const payloadId of selectedPayloads) {
-      const payload = availablePayloads.find(p => p.id === payloadId)
-      if (!payload) continue
+    // Inject API key for supported providers
+    let provider = (model.provider || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+    if (provider.startsWith('openai')) provider = 'openai';
+    if (provider.startsWith('anthropic')) provider = 'anthropic';
+    if (provider.startsWith('google')) provider = 'google';
+    if (provider === 'xaigrok' || provider === 'grokxai' || provider === 'grok') provider = 'grok';
+    if (provider === 'xai') provider = 'xai';
+    if (['openai', 'anthropic', 'google', 'xai', 'grok'].includes(provider)) {
+      const userApiKey = getAPIKeyForModel(provider, model.model) || getAPIKeyForModel(provider, '');
+      const apiKey = userApiKey || configManager.getAPIKey(provider) || '';
+      if (!apiKey) {
+        setError(`Missing API key for ${model.name || provider}. Please set it in Settings before running tests.`);
+        setIsRunning(false);
+        return;
+      }
+      model = { ...model, apiKey };
+    }
 
+    for (const payloadId of selectedPayloads) {
+      const payload = availablePayloads.find(p => (p.id || '') === (payloadId || ''))
+      if (!payload) continue
       try {
-        // Use real test execution
-        const result = await executeTest(model, payload)
+        const result = await window.electronAPI.executeTest(model, payload)
         setTestResults(prev => [...prev, result])
         saveTestResultToHistory(result)
         completedTests++
         setProgress((completedTests / totalTests) * 100)
-      } catch (error) {
+      } catch (error: any) {
         const errorResult = {
-          id: `${model.id}-${payloadId}-${Date.now()}`,
+          id: `${model.id || ''}-${payloadId || ''}-${Date.now()}`,
           model,
           payload,
           response: `Error: ${error instanceof Error ? error.message : 'Unknown error'}`,
@@ -249,9 +280,9 @@ const Assessment = () => {
           executionTime: 0,
           error: error instanceof Error ? error.message : 'Unknown error',
           metadata: {
-            modelProvider: model.provider,
-            payloadCategory: payload.category,
-            payloadSeverity: payload.severity
+            modelProvider: model.provider || '',
+            payloadCategory: payload.category || '',
+            payloadSeverity: payload.severity || ''
           }
         }
         setTestResults(prev => [...prev, errorResult])
@@ -260,63 +291,127 @@ const Assessment = () => {
         setProgress((completedTests / totalTests) * 100)
       }
     }
-
     setIsRunning(false)
   }
 
   // --- Filter payloads by search and category chip ---
   const filteredPayloads = availablePayloads.filter(payload =>
-    (categoryFilter === 'all' || payload.category === categoryFilter) &&
+    (categoryFilter === 'all' || (payload.category || '') === categoryFilter) &&
     (
-      payload.name.toLowerCase().includes(payloadSearch.toLowerCase()) ||
-      payload.category.toLowerCase().includes(payloadSearch.toLowerCase()) ||
-      (payload.description && payload.description.toLowerCase().includes(payloadSearch.toLowerCase()))
+      (payload.name || '').toLowerCase().includes((payloadSearch || '').toLowerCase()) ||
+      (payload.category || '').toLowerCase().includes((payloadSearch || '').toLowerCase()) ||
+      ((payload.description || '').toLowerCase().includes((payloadSearch || '').toLowerCase()))
     )
   )
 
   // --- Selection summary ---
   const selectionSummary = categoryFilter === 'all'
     ? `${selectedPayloads.length} of ${filteredPayloads.length} payloads selected`
-    : `${filteredPayloads.filter(p => selectedPayloads.includes(p.id)).length} of ${filteredPayloads.length} in '${categoryFilter}' selected`
+    : `${filteredPayloads.filter(p => selectedPayloads.includes(p.id || '')).length} of ${filteredPayloads.length} in '${categoryFilter}' selected`
 
-  const renderStep1 = () => (
-    <div className="space-y-4">
-      <div className="flex items-center mb-2">
-        <h2 className="text-xl font-semibold mr-2">Select AI Model</h2>
-        <span className="relative group inline-block ml-1 align-middle">
-          <Info className="h-4 w-4 text-blue-400" />
-          <span className="absolute left-6 top-1/2 -translate-y-1/2 z-10 hidden group-hover:block bg-gray-800 text-white text-xs rounded px-2 py-1 whitespace-nowrap shadow-lg">Choose one LLM to test. Only models you have configured and enabled will appear, including Ollama.</span>
-        </span>
+  // Calculate ASR (success rate) from test results, excluding tests with expected output '(N/A)'
+  const calculateASR = (results: any[]) => {
+    let tested = 0
+    let success = 0
+    results.forEach(result => {
+      if (result.payload?.expectedOutput && result.payload.expectedOutput !== '(N/A)') {
+        tested++
+        if (!result.vulnerability) success++
+      }
+    })
+    return tested > 0 ? (success / tested) : 0
+  }
+
+  const renderStep1 = () => {
+    const getProviderIcon = (provider: string) => {
+      switch (provider.toLowerCase()) {
+        case 'openai': return '🤖'
+        case 'anthropic': return '🧠'
+        case 'google': return '🔍'
+        case 'ollama': return '🦙'
+        case 'xai': case 'grok': return '🚀'
+        default: return '⚡'
+      }
+    }
+
+    const getProviderColor = (provider: string) => {
+      switch (provider.toLowerCase()) {
+        case 'openai': return 'from-green-500 to-green-600'
+        case 'anthropic': return 'from-orange-500 to-orange-600'
+        case 'google': return 'from-blue-500 to-blue-600'
+        case 'ollama': return 'from-purple-500 to-purple-600'
+        case 'xai': case 'grok': return 'from-gray-600 to-gray-700'
+        default: return 'from-gray-500 to-gray-600'
+      }
+    }
+
+    return (
+      <div className="space-y-6">
+        <div className="text-center">
+          <h2 className="heading-2 mb-2">Select AI Model</h2>
+          <p className="body-text text-[#1F2C6D]/70">Choose the AI model you want to test for security vulnerabilities</p>
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {uniqueAvailableModels.map((model) => (
+            <label
+              key={model.id}
+              className={`group relative overflow-hidden rounded-xl border-2 cursor-pointer transition-all duration-200 hover:shadow-lg ${
+                selectedModel === model.id
+                  ? 'border-[#4556E4] bg-[#4556E4]/5'
+                  : 'border-gray-200 hover:border-gray-300'
+              }`}
+            >
+              <input
+                type="radio"
+                checked={selectedModel === model.id}
+                onChange={() => handleModelSelect(model.id)}
+                className="sr-only"
+                name="llm-model"
+              />
+              <div className="p-4">
+                <div className="flex items-center mb-3">
+                  <div className={`w-10 h-10 rounded-lg bg-gradient-to-r ${getProviderColor(model.provider)} flex items-center justify-center text-white text-lg font-bold mr-3`}>
+                    {getProviderIcon(model.provider)}
+                  </div>
+                  <div className="flex-1">
+                    <div className="font-semibold text-[#081423] text-sm">{model.name}</div>
+                    <div className="text-xs text-[#1F2C6D]/60 capitalize">{model.provider}</div>
+                  </div>
+                  {selectedModel === model.id && (
+                    <div className="w-5 h-5 bg-[#4556E4] rounded-full flex items-center justify-center">
+                      <CheckCircle className="h-3 w-3 text-white" />
+                    </div>
+                  )}
+                </div>
+                <div className="text-xs text-[#1F2C6D]/70">
+                  Model ID: {model.model}
+                </div>
+              </div>
+              <div className={`absolute inset-0 rounded-xl transition-opacity duration-200 ${
+                selectedModel === model.id 
+                  ? 'bg-[#4556E4]/10 opacity-100' 
+                  : 'bg-gray-50 opacity-0 group-hover:opacity-100'
+              }`} />
+            </label>
+          ))}
+        </div>
+        
+        {uniqueAvailableModels.length === 0 && (
+          <div className="text-center py-8">
+            <Shield className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+            <p className="text-[#1F2C6D] mb-2">No models available</p>
+            <p className="text-sm text-[#1F2C6D]/70">
+              Please add and configure models in{' '}
+              <a href='/settings' className='text-[#4556E4] underline hover:text-[#4556E4]/80'>
+                Settings
+              </a>
+            </p>
+          </div>
+        )}
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-        {availableModels.map((model) => (
-          <label
-            key={model.id}
-            className={`flex items-center p-3 border rounded-lg cursor-pointer transition-colors text-sm ${
-              selectedModel === model.id
-                ? 'border-blue-500 bg-blue-50'
-                : 'border-gray-200 hover:border-gray-300'
-            }`}
-          >
-            <input
-              type="radio"
-              checked={selectedModel === model.id}
-              onChange={() => handleModelSelect(model.id)}
-              className="h-4 w-4 text-blue-600 mr-3"
-              name="llm-model"
-            />
-            <div>
-              <div className="font-medium">{model.name}</div>
-              <div className="text-xs text-gray-500">{model.provider}</div>
-            </div>
-          </label>
-        ))}
-      </div>
-      {availableModels.length === 0 && (
-        <div className="text-gray-500 text-sm mt-2">No models available. Please add and enable models in <a href='/settings' className='text-blue-600 underline'>Settings</a>.</div>
-      )}
-    </div>
-  )
+    )
+  }
 
   // --- Modernized renderStep2 ---
   const renderStep2 = () => {
@@ -326,15 +421,15 @@ const Assessment = () => {
     const catPayloads = activeCat ? activeCat.payloads : []
     // Filtered payloads by search
     const filteredCatPayloads = catPayloads.filter(p =>
-      p.name.toLowerCase().includes(catSearch.toLowerCase()) ||
-      (p.description && p.description.toLowerCase().includes(catSearch.toLowerCase())) ||
-      (p.tags && p.tags.join(' ').toLowerCase().includes(catSearch.toLowerCase()))
+      (p.name || '').toLowerCase().includes((catSearch || '').toLowerCase()) ||
+      ((p.description || '').toLowerCase().includes((catSearch || '').toLowerCase())) ||
+      ((p.tags || []).join(' ').toLowerCase().includes((catSearch || '').toLowerCase()))
     )
     // Selected payloads in this category
-    const selectedInCat = filteredCatPayloads.filter(p => selectedPayloads.includes(p.id))
+    const selectedInCat = filteredCatPayloads.filter(p => selectedPayloads.includes(p.id || ''))
     // Bulk actions
     const handleSelectAllInCat = () => {
-      setSelectedPayloads(prev => Array.from(new Set([...prev, ...filteredCatPayloads.map(p => p.id)])))
+      setSelectedPayloads(prev => Array.from(new Set([...prev, ...filteredCatPayloads.map(p => p.id || '')])))
     }
     const handleDeselectAllInCat = () => {
       setSelectedPayloads(prev => prev.filter(id => !filteredCatPayloads.some(p => p.id === id)))
@@ -349,11 +444,11 @@ const Assessment = () => {
     return (
       <div className="flex gap-6 min-h-[500px]">
         {/* Sidebar: Categories */}
-        <aside className="w-64 bg-white border-r border-gray-200 rounded-lg shadow-sm p-4 flex flex-col gap-2 sticky top-24 h-fit self-start">
-          <h3 className="text-lg font-semibold mb-2">Attack Categories</h3>
+        <aside className="w-64 card p-4 flex flex-col gap-2 sticky top-24 h-fit self-start">
+          <h3 className="heading-3 mb-2">Attack Categories</h3>
           {categorizedPayloads.map(cat => {
             const total = cat.payloads.length
-            const selected = cat.payloads.filter((p: AttackPayload) => selectedPayloads.includes(p.id)).length
+            const selected = cat.payloads.filter((p: AttackPayload) => selectedPayloads.includes(p.id || '')).length
             return (
               <button
                 key={cat.id}
@@ -400,27 +495,27 @@ const Assessment = () => {
                         <li className="text-gray-400 text-sm py-6 text-center">No payloads in this category.</li>
                       )}
                       {cat.payloads.filter(p =>
-                        p.name.toLowerCase().includes(catSearch.toLowerCase()) ||
-                        (p.description && p.description.toLowerCase().includes(catSearch.toLowerCase())) ||
-                        (p.tags && p.tags.join(' ').toLowerCase().includes(catSearch.toLowerCase()))
+                        (p.name || '').toLowerCase().includes((catSearch || '').toLowerCase()) ||
+                        ((p.description || '').toLowerCase().includes((catSearch || '').toLowerCase())) ||
+                        ((p.tags || []).join(' ').toLowerCase().includes((catSearch || '').toLowerCase()))
                       ).map(payload => (
                         <li
                           key={payload.id}
-                          className={`group flex items-start gap-4 px-4 py-3 transition bg-white cursor-pointer ${selectedPayloads.includes(payload.id) ? 'bg-blue-50 border-l-4 border-blue-400' : 'hover:bg-gray-50'} ${expandedRow === payload.id ? 'z-10' : ''}`}
+                          className={`group flex items-start gap-4 px-4 py-3 transition bg-white cursor-pointer ${selectedPayloads.includes(payload.id || '') ? 'bg-blue-50 border-l-4 border-blue-400' : 'hover:bg-gray-50'} ${expandedRow === payload.id ? 'z-10' : ''}`}
                         >
                           <input
                             type="checkbox"
-                            checked={selectedPayloads.includes(payload.id)}
-                            onChange={e => { e.stopPropagation(); handleRowToggle(payload.id); }}
+                            checked={selectedPayloads.includes(payload.id || '')}
+                            onChange={e => { e.stopPropagation(); handleRowToggle(payload.id || ''); }}
                             className="mt-1 h-5 w-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500 flex-shrink-0"
                             tabIndex={0}
                           />
                           <div className="flex-1 min-w-0" onClick={() => setExpandedRow(expandedRow === payload.id ? null : payload.id)}>
                             <div className="flex items-center gap-2">
                               <span className="font-semibold text-base text-gray-900 break-words line-clamp-1" title={payload.name}>{payload.name}</span>
-                              {payload.tags && payload.tags.length > 0 && (
+                              {(payload.tags || []).length > 0 && (
                                 <div className="flex flex-wrap gap-1">
-                                  {payload.tags.map(tag => (
+                                  {(payload.tags || []).map(tag => (
                                     <span key={tag} className="bg-gray-200 text-gray-700 rounded px-2 py-0.5 text-xs whitespace-nowrap">{tag}</span>
                                   ))}
                                 </div>
@@ -431,7 +526,7 @@ const Assessment = () => {
                               <div className="mt-2 bg-gray-50 border-t pt-2 px-1 rounded">
                                 <div className="mb-2"><span className="font-semibold">Payload:</span> <pre className="inline whitespace-pre-wrap break-all bg-gray-100 p-2 rounded max-w-full overflow-x-auto text-sm" style={{maxHeight:'200px'}}>{payload.payload}</pre></div>
                                 <div className="mb-2"><span className="font-semibold">Description:</span> {payload.description}</div>
-                                <div className="mb-2"><span className="font-semibold">Tags:</span> {payload.tags?.join(', ')}</div>
+                                <div className="mb-2"><span className="font-semibold">Tags:</span> {(payload.tags || []).join(', ')}</div>
                                 <div className="mb-2"><span className="font-semibold">Category:</span> {payload.category}</div>
                                 <div className="mb-2"><span className="font-semibold">Source:</span> {payload.source}</div>
                               </div>
@@ -461,27 +556,27 @@ const Assessment = () => {
                       <li className="text-gray-400 text-sm py-6 text-center">No payloads in this category.</li>
                     )}
                     {activeCat?.payloads.filter(p =>
-                      p.name.toLowerCase().includes(catSearch.toLowerCase()) ||
-                      (p.description && p.description.toLowerCase().includes(catSearch.toLowerCase())) ||
-                      (p.tags && p.tags.join(' ').toLowerCase().includes(catSearch.toLowerCase()))
+                      (p.name || '').toLowerCase().includes((catSearch || '').toLowerCase()) ||
+                      ((p.description || '').toLowerCase().includes((catSearch || '').toLowerCase())) ||
+                      ((p.tags || []).join(' ').toLowerCase().includes((catSearch || '').toLowerCase()))
                     ).map(payload => (
                       <li
                         key={payload.id}
-                        className={`group flex items-start gap-4 px-4 py-3 transition bg-white cursor-pointer ${selectedPayloads.includes(payload.id) ? 'bg-blue-50 border-l-4 border-blue-400' : 'hover:bg-gray-50'} ${expandedRow === payload.id ? 'z-10' : ''}`}
+                        className={`group flex items-start gap-4 px-4 py-3 transition bg-white cursor-pointer ${selectedPayloads.includes(payload.id || '') ? 'bg-blue-50 border-l-4 border-blue-400' : 'hover:bg-gray-50'} ${expandedRow === payload.id ? 'z-10' : ''}`}
                       >
                         <input
                           type="checkbox"
-                          checked={selectedPayloads.includes(payload.id)}
-                          onChange={e => { e.stopPropagation(); handleRowToggle(payload.id); }}
+                          checked={selectedPayloads.includes(payload.id || '')}
+                          onChange={e => { e.stopPropagation(); handleRowToggle(payload.id || ''); }}
                           className="mt-1 h-5 w-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500 flex-shrink-0"
                           tabIndex={0}
                         />
                         <div className="flex-1 min-w-0" onClick={() => setExpandedRow(expandedRow === payload.id ? null : payload.id)}>
                           <div className="flex items-center gap-2">
                             <span className="font-semibold text-base text-gray-900 break-words line-clamp-1" title={payload.name}>{payload.name}</span>
-                            {payload.tags && payload.tags.length > 0 && (
+                            {(payload.tags || []).length > 0 && (
                               <div className="flex flex-wrap gap-1">
-                                {payload.tags.map(tag => (
+                                {(payload.tags || []).map(tag => (
                                   <span key={tag} className="bg-gray-200 text-gray-700 rounded px-2 py-0.5 text-xs whitespace-nowrap">{tag}</span>
                                 ))}
                               </div>
@@ -492,7 +587,7 @@ const Assessment = () => {
                             <div className="mt-2 bg-gray-50 border-t pt-2 px-1 rounded">
                               <div className="mb-2"><span className="font-semibold">Payload:</span> <pre className="inline whitespace-pre-wrap break-all bg-gray-100 p-2 rounded max-w-full overflow-x-auto text-sm" style={{maxHeight:'200px'}}>{payload.payload}</pre></div>
                               <div className="mb-2"><span className="font-semibold">Description:</span> {payload.description}</div>
-                              <div className="mb-2"><span className="font-semibold">Tags:</span> {payload.tags?.join(', ')}</div>
+                              <div className="mb-2"><span className="font-semibold">Tags:</span> {(payload.tags || []).join(', ')}</div>
                               <div className="mb-2"><span className="font-semibold">Category:</span> {payload.category}</div>
                               <div className="mb-2"><span className="font-semibold">Source:</span> {payload.source}</div>
                             </div>
@@ -530,105 +625,215 @@ const Assessment = () => {
     )
   }
 
-  const renderStep3 = () => (
-    <div className="space-y-4">
-      <div className="flex items-center mb-2">
-        <h2 className="text-xl font-semibold mr-2">Run Security Tests</h2>
-        <span className="relative group inline-block ml-1 align-middle">
-          <Info className="h-4 w-4 text-blue-400" />
-          <span className="absolute left-6 top-1/2 -translate-y-1/2 z-10 hidden group-hover:block bg-gray-800 text-white text-xs rounded px-2 py-1 whitespace-nowrap shadow-lg">Run the selected payloads against your chosen models.</span>
-        </span>
-      </div>
-      {isRunning ? (
-        <div className="text-center py-8">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-lg font-medium">Running tests...</p>
-          <p className="text-sm text-gray-500 mt-2">{Math.round(progress)}% complete</p>
-          <div className="w-full bg-gray-200 rounded-full h-2 mt-4">
-            <div className="bg-blue-600 h-2 rounded-full" style={{ width: `${progress}%` }}></div>
-          </div>
+  const renderStep3 = () => {
+    const totalTests = selectedPayloads.length
+    const vulnerabilities = testResults.filter(r => r.vulnerability).length
+    const successRate = testResults.length > 0 ? ((testResults.length - vulnerabilities) / testResults.length * 100) : 0
+    
+    return (
+      <div className="space-y-6">
+        <div className="text-center">
+          <h2 className="heading-2 mb-2">Run Security Tests</h2>
+          <p className="body-text text-[#1F2C6D]/70">Execute security assessments and analyze results</p>
         </div>
-      ) : (
-        <div className="space-y-4">
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm">
-            <span className="font-medium">Test Summary:</span> {selectedModel ? '1 model' : 'No model selected'} × {selectedPayloads.length} payload(s) = {selectedPayloads.length} total tests
-          </div>
-          <button
-            onClick={runTests}
-            disabled={!selectedModel || selectedPayloads.length === 0}
-            className="w-full btn-primary py-3 px-6 flex items-center justify-center space-x-2"
-          >
-            <Play className="h-5 w-5" />
-            <span>Start Security Testing</span>
-          </button>
-        </div>
-      )}
-      {testResults.length > 0 && (
-        <div className="mt-6">
-          <div className="flex items-center justify-between mb-2">
-            <h3 className="text-lg font-semibold">Test Results</h3>
-            <div className="flex items-center gap-4">
-              <span className="text-sm font-medium">ASR: {testResults.filter(r => r.success).length} / {testResults.length} = {testResults.length > 0 ? (testResults.filter(r => r.success).length / testResults.length) * 100 : 0}%</span>
-              <button
-                className="btn-secondary px-3 py-1 text-xs rounded"
-                onClick={exportResults}
-              >Export Results</button>
+        
+        {isRunning ? (
+          <div className="text-center py-12">
+            <div className="relative w-20 h-20 mx-auto mb-6">
+              <div className="absolute inset-0 rounded-full border-4 border-gray-200"></div>
+              <div className="absolute inset-0 rounded-full border-4 border-[#4556E4] border-t-transparent animate-spin"></div>
+              <div className="absolute inset-0 flex items-center justify-center">
+                <Zap className="h-8 w-8 text-[#4556E4]" />
+              </div>
+            </div>
+            <h3 className="heading-3 mb-2">Running Security Tests...</h3>
+            <p className="body-text text-[#1F2C6D]/70 mb-4">{Math.round(progress)}% complete</p>
+            <div className="w-full max-w-md mx-auto bg-gray-200 rounded-full h-2">
+              <div 
+                className="bg-gradient-to-r from-[#4556E4] to-[#4556E4] h-2 rounded-full transition-all duration-300" 
+                style={{ width: `${progress}%` }}
+              ></div>
             </div>
           </div>
-          <div className="overflow-x-auto">
-            <table className="min-w-full text-sm border rounded-lg">
-              <thead>
-                <tr className="bg-gray-100">
-                  <th className="px-3 py-2 text-left">Payload</th>
-                  <th className="px-3 py-2 text-left">LLM Output</th>
-                  <th className="px-3 py-2 text-left">Expected Output</th>
-                  <th className="px-3 py-2 text-left">Result</th>
-                  <th className="px-3 py-2 text-left">Details</th>
-                </tr>
-              </thead>
-              <tbody>
-                {testResults.map((result) => {
-                  const expected = result.payload?.expectedOutput || '(N/A)'
-                  const isPass = !result.vulnerability
-                  return (
-                    <tr key={result.id} className="border-b last:border-b-0">
-                      <td className="px-3 py-2 max-w-xs truncate" title={result.payload?.payload}>{result.payload?.payload}</td>
-                      <td className="px-3 py-2 max-w-xs truncate" title={result.response}>{result.response}</td>
-                      <td className="px-3 py-2 max-w-xs truncate" title={expected}>{expected}</td>
-                      <td className="px-3 py-2">
-                        {isPass ? (
-                          <span className="px-2 py-1 text-xs rounded bg-green-100 text-green-800 font-semibold">PASS</span>
-                        ) : (
-                          <span className="px-2 py-1 text-xs rounded bg-red-100 text-red-800 font-semibold">FAIL</span>
-                        )}
-                      </td>
-                      <td className="px-3 py-2">
-                        <button
-                          className="text-xs text-blue-600 underline"
-                          onClick={() => setExpandedResult(expandedResult === result.id ? null : result.id)}
-                        >{expandedResult === result.id ? 'Hide' : 'Show'} Details</button>
-                      </td>
-                    </tr>
-                  )
-                })}
-              </tbody>
-            </table>
-            {/* Expanded details below table */}
-            {testResults.map(result => expandedResult === result.id && (
-              <div key={result.id + '-details'} className="bg-gray-50 border border-gray-200 rounded p-4 my-2 overflow-x-auto">
-                <div className="mb-2 flex items-start"><span className="font-semibold mr-2">Payload:</span> <pre className="inline whitespace-pre-wrap break-all flex-1 max-w-full overflow-x-auto" style={{maxHeight:'300px'}}>{result.payload?.payload}</pre> <button className="ml-2 text-xs text-blue-600 underline flex items-center gap-1" onClick={() => copyToClipboard(result.payload?.payload || '')}><Copy className="h-4 w-4" />Copy</button></div>
-                <div className="mb-2 flex items-start"><span className="font-semibold mr-2">LLM Output:</span> <pre className="inline whitespace-pre-wrap break-all flex-1 max-w-full overflow-x-auto" style={{maxHeight:'300px'}}>{result.response}</pre> <button className="ml-2 text-xs text-blue-600 underline flex items-center gap-1" onClick={() => copyToClipboard(result.response || '')}><Copy className="h-4 w-4" />Copy</button></div>
-                <div className="mb-2"><span className="font-semibold">Expected Output:</span> <pre className="inline whitespace-pre-wrap break-all">{result.payload?.expectedOutput || '(N/A)'}</pre></div>
-                <div className="mb-2"><span className="font-semibold">Result:</span> {result.vulnerability ? 'FAIL' : 'PASS'}</div>
-                <div className="mb-2"><span className="font-semibold">Detection Method:</span> {result.detectionMethod}</div>
-                {result.error && <div className="mb-2 text-red-600"><span className="font-semibold">Error:</span> {result.error}</div>}
+        ) : (
+          <div className="space-y-6">
+            <div className="card p-6 bg-gradient-to-r from-[#4556E4]/5 to-[#4556E4]/10 border-[#4556E4]/20">
+              <div className="flex items-center mb-4">
+                <Target className="h-6 w-6 text-[#4556E4] mr-3" />
+                <h3 className="heading-3">Test Configuration</h3>
               </div>
-            ))}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-[#081423]">1</div>
+                  <div className="text-sm text-[#1F2C6D]/70">Selected Model</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-[#081423]">{selectedPayloads.length}</div>
+                  <div className="text-sm text-[#1F2C6D]/70">Attack Payloads</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-[#081423]">{totalTests}</div>
+                  <div className="text-sm text-[#1F2C6D]/70">Total Tests</div>
+                </div>
+              </div>
+            </div>
+            
+            <button
+              onClick={runTests}
+              disabled={!selectedModel || selectedPayloads.length === 0}
+              className="w-full btn-primary py-4 px-6 flex items-center justify-center space-x-3 text-lg font-medium"
+            >
+              <Play className="h-6 w-6" />
+              <span>Start Security Testing</span>
+            </button>
           </div>
-        </div>
-      )}
-    </div>
-  )
+        )}
+        
+        {testResults.length > 0 && (
+          <div className="space-y-6">
+            {/* Results Summary */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="card p-4 bg-green-50 border-green-200">
+                <div className="flex items-center">
+                  <CheckCircle className="h-8 w-8 text-green-600 mr-3" />
+                  <div>
+                    <div className="text-2xl font-bold text-green-800">{testResults.length - vulnerabilities}</div>
+                    <div className="text-sm text-green-700">Passed Tests</div>
+                  </div>
+                </div>
+              </div>
+              <div className="card p-4 bg-red-50 border-red-200">
+                <div className="flex items-center">
+                  <AlertCircle className="h-8 w-8 text-red-600 mr-3" />
+                  <div>
+                    <div className="text-2xl font-bold text-red-800">{vulnerabilities}</div>
+                    <div className="text-sm text-red-700">Vulnerabilities</div>
+                  </div>
+                </div>
+              </div>
+              <div className="card p-4 bg-blue-50 border-blue-200">
+                <div className="flex items-center">
+                  <Target className="h-8 w-8 text-blue-600 mr-3" />
+                  <div>
+                    <div className="text-2xl font-bold text-blue-800">{successRate.toFixed(1)}%</div>
+                    <div className="text-sm text-blue-700">Success Rate</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            {/* Results Header */}
+            <div className="flex items-center justify-between">
+              <h3 className="heading-3">Test Results</h3>
+              <button
+                className="btn-secondary flex items-center space-x-2"
+                onClick={exportResults}
+              >
+                <Eye className="h-4 w-4" />
+                <span>Export Results</span>
+              </button>
+            </div>
+            
+            {/* Results Cards */}
+            <div className="space-y-3">
+              {testResults.map((result) => {
+                const isPass = !result.vulnerability
+                const isExpanded = expandedResult === result.id
+                
+                return (
+                  <div key={result.id} className={`card transition-all duration-200 ${
+                    isPass ? 'border-green-200 bg-green-50/50' : 'border-red-200 bg-red-50/50'
+                  }`}>
+                    <div className="p-4">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center mb-2">
+                            <div className={`w-3 h-3 rounded-full mr-3 ${
+                              isPass ? 'bg-green-500' : 'bg-red-500'
+                            }`}></div>
+                            <h4 className="font-semibold text-[#081423] truncate max-w-md">
+                              {result.payload?.name || 'Unknown Payload'}
+                            </h4>
+                            <span className={`ml-auto px-3 py-1 rounded-full text-xs font-medium ${
+                              isPass 
+                                ? 'bg-green-100 text-green-800' 
+                                : 'bg-red-100 text-red-800'
+                            }`}>
+                              {isPass ? 'PASS' : 'FAIL'}
+                            </span>
+                          </div>
+                          <div className="text-sm text-[#1F2C6D]/70 mb-2 truncate">
+                            {result.payload?.description || 'No description available'}
+                          </div>
+                          <div className="text-xs text-[#1F2C6D]/60">
+                            Detection: {result.detectionMethod} • 
+                            Confidence: {(result.confidence * 100).toFixed(0)}%
+                          </div>
+                        </div>
+                        <button
+                          className="ml-4 text-[#4556E4] hover:text-[#4556E4]/80 transition-colors"
+                          onClick={() => setExpandedResult(isExpanded ? null : result.id)}
+                        >
+                          <ChevronDown className={`h-5 w-5 transition-transform ${
+                            isExpanded ? 'rotate-180' : ''
+                          }`} />
+                        </button>
+                      </div>
+                      
+                      {isExpanded && (
+                        <div className="mt-4 pt-4 border-t border-gray-200 space-y-4">
+                          <div>
+                            <div className="flex items-center justify-between mb-2">
+                              <span className="font-medium text-[#081423]">Payload</span>
+                              <button
+                                className="btn-secondary text-xs px-2 py-1 flex items-center space-x-1"
+                                onClick={() => copyToClipboard(result.payload?.payload || '')}
+                              >
+                                <Copy className="h-3 w-3" />
+                                <span>Copy</span>
+                              </button>
+                            </div>
+                            <pre className="text-sm bg-gray-100 p-3 rounded-lg overflow-x-auto max-h-32">
+                              {result.payload?.payload}
+                            </pre>
+                          </div>
+                          
+                          <div>
+                            <div className="flex items-center justify-between mb-2">
+                              <span className="font-medium text-[#081423]">Model Response</span>
+                              <button
+                                className="btn-secondary text-xs px-2 py-1 flex items-center space-x-1"
+                                onClick={() => copyToClipboard(result.response || '')}
+                              >
+                                <Copy className="h-3 w-3" />
+                                <span>Copy</span>
+                              </button>
+                            </div>
+                            <pre className="text-sm bg-gray-100 p-3 rounded-lg overflow-x-auto max-h-32">
+                              {result.response}
+                            </pre>
+                          </div>
+                          
+                          {result.error && (
+                            <div>
+                              <span className="font-medium text-red-600">Error</span>
+                              <div className="text-sm text-red-600 mt-1">
+                                {result.error}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        )}
+      </div>
+    )
+  }
 
   const renderCurrentStep = () => {
     switch (currentStep) {
@@ -644,67 +849,109 @@ const Assessment = () => {
   }
 
   return (
-    <div className="p-6 max-w-4xl mx-auto">
+    <div className="p-6 max-w-6xl mx-auto">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Security Assessment</h1>
-        <p className="text-gray-600">Test your AI models against various attack payloads. Select models and payloads, then run tests to see which payloads can exploit your LLMs.</p>
+        <h1 className="heading-1 mb-4">Security Assessment</h1>
+        <p className="body-text text-lg text-[#1F2C6D]/70">
+          Test your AI models against various attack payloads. Select models and payloads, then run tests to identify potential security vulnerabilities.
+        </p>
       </div>
       {/* Progress Steps */}
       <div className="mb-8">
-        <div className="flex items-center space-x-4">
-          {[1, 2, 3].map((step) => (
-            <div key={step} className="flex items-center">
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
-                step <= currentStep
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-gray-200 text-gray-500'
-              }`}>
-                {step}
+        <div className="relative">
+          <div className="absolute top-5 left-0 right-0 h-0.5 bg-gray-200"></div>
+          <div className={`absolute top-5 left-0 h-0.5 bg-gradient-to-r from-[#4556E4] to-[#4556E4] transition-all duration-500 ${
+            currentStep === 1 ? 'w-0' : currentStep === 2 ? 'w-1/2' : 'w-full'
+          }`}></div>
+          <div className="relative flex justify-between">
+            {[
+              { step: 1, title: 'Select Model', icon: Users, description: 'Choose your AI model' },
+              { step: 2, title: 'Select Payloads', icon: Database, description: 'Pick attack vectors' },
+              { step: 3, title: 'Run Tests', icon: Zap, description: 'Execute & analyze' }
+            ].map(({ step, title, icon: Icon, description }) => (
+              <div key={step} className="flex flex-col items-center">
+                <div className={`w-10 h-10 rounded-full flex items-center justify-center border-2 transition-all duration-300 ${
+                  step < currentStep
+                    ? 'bg-[#4556E4] border-[#4556E4] text-white'
+                    : step === currentStep
+                    ? 'bg-white border-[#4556E4] text-[#4556E4] shadow-lg'
+                    : 'bg-white border-gray-300 text-gray-400'
+                }`}>
+                  {step < currentStep ? (
+                    <CheckCircle className="h-5 w-5" />
+                  ) : (
+                    <Icon className="h-5 w-5" />
+                  )}
+                </div>
+                <div className="mt-3 text-center">
+                  <div className={`text-sm font-medium ${
+                    step <= currentStep ? 'text-[#081423]' : 'text-gray-500'
+                  }`}>
+                    {title}
+                  </div>
+                  <div className="text-xs text-gray-500 mt-1 max-w-24">
+                    {description}
+                  </div>
+                </div>
               </div>
-              {step < 3 && (
-                <div className={`w-16 h-1 mx-2 ${
-                  step < currentStep ? 'bg-blue-600' : 'bg-gray-200'
-                }`} />
-              )}
-            </div>
-          ))}
-        </div>
-        <div className="flex justify-between mt-2 text-sm text-gray-500">
-          <span>Select Model</span>
-          <span>Select Payloads</span>
-          <span>Run Tests</span>
+            ))}
+          </div>
         </div>
       </div>
       {/* Step Content */}
-      <div className="bg-white rounded-lg shadow p-6">
+      <div className="card p-8">
+        {error && (
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6" role="alert">
+            <div className="flex items-center">
+              <AlertCircle className="h-5 w-5 text-red-600 mr-3" />
+              <div>
+                <h3 className="text-sm font-medium text-red-800">Configuration Error</h3>
+                <p className="text-sm text-red-700 mt-1">{error}</p>
+              </div>
+            </div>
+          </div>
+        )}
         {renderCurrentStep()}
       </div>
       {/* Navigation */}
-      <div className="flex justify-between mt-6">
+      <div className="flex justify-between mt-8">
         <button
           onClick={prevStep}
           disabled={currentStep === 1}
-          className="btn-secondary px-6 py-2 flex items-center space-x-2"
+          className={`px-6 py-3 rounded-lg flex items-center space-x-2 font-medium transition-all ${
+            currentStep === 1 
+              ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
+              : 'btn-secondary hover:bg-gray-100'
+          }`}
         >
-          <ChevronLeft className="h-4 w-4" />
+          <ChevronLeft className="h-5 w-5" />
           <span>Previous</span>
         </button>
         {currentStep < 3 ? (
           <button
             onClick={nextStep}
-            className="btn-primary px-6 py-2 flex items-center space-x-2"
+            disabled={currentStep === 1 && !selectedModel || currentStep === 2 && selectedPayloads.length === 0}
+            className={`px-6 py-3 rounded-lg flex items-center space-x-2 font-medium transition-all ${
+              (currentStep === 1 && !selectedModel) || (currentStep === 2 && selectedPayloads.length === 0)
+                ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                : 'btn-primary hover:bg-[#4556E4]/90'
+            }`}
           >
             <span>Next</span>
-            <ChevronRight className="h-4 w-4" />
+            <ChevronRight className="h-5 w-5" />
           </button>
         ) : (
           <button
             onClick={() => navigate('/test-history')}
-            className="btn-primary px-6 py-2 flex items-center space-x-2"
             disabled={testResults.length === 0}
+            className={`px-6 py-3 rounded-lg flex items-center space-x-2 font-medium transition-all ${
+              testResults.length === 0
+                ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                : 'btn-primary hover:bg-[#4556E4]/90'
+            }`}
           >
             <span>View Results</span>
-            <ChevronRight className="h-4 w-4" />
+            <ChevronRight className="h-5 w-5" />
           </button>
         )}
       </div>

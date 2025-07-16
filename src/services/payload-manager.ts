@@ -7,6 +7,8 @@
  */
 
 import { AttackPayload } from '../types'
+import { activityLogger } from './activity-logger'
+import { DEFAULT_FAILURE_KEYWORDS, extractSuccessKeywords } from './keyword-utils'
 
 export interface PayloadSource {
   id: string
@@ -28,9 +30,9 @@ export interface PayloadCategory {
 
 export interface PayloadFilter {
   categories?: string[]
-  owaspLabels?: string[]
-  mitreAtlasLabels?: string[]
-  aiSystemLabels?: string[]
+  owasp?: string[]
+  mitreAtlas?: string[]
+  aiSystem?: string[]
   tags?: string[]
   sources?: string[]
   techniques?: string[]
@@ -43,53 +45,14 @@ export interface PayloadFilter {
 
 export class PayloadManager {
   private payloads: Map<string, AttackPayload> = new Map()
-  private sources: PayloadSource[] = []
+  private sources: string[] = [
+    '/assets/payloads/all-attack-payloads.json'
+  ]
   private categories: Map<string, PayloadCategory> = new Map()
 
   constructor() {
-    this.initializeSources()
+    // Only one source now
     this.initializeCategories()
-  }
-
-  private initializeSources() {
-    this.sources = [
-      {
-        id: 'owasp-llm',
-        name: 'OWASP LLM Top 10',
-        description: 'Official OWASP LLM security vulnerabilities',
-        file: 'owasp-llm01-llm10.json',
-        category: 'standard',
-        lastUpdated: '2024-12-01',
-        payloadCount: 11
-      },
-      {
-        id: 'advanced-attacks',
-        name: 'Advanced Attack Techniques',
-        description: 'Advanced prompt injection and AI security attacks',
-        file: 'advanced-attacks.json',
-        category: 'advanced',
-        lastUpdated: '2024-12-15',
-        payloadCount: 33
-      },
-      {
-        id: 'research-2025',
-        name: 'Latest Research 2025',
-        description: 'Cutting-edge research from 2024-2025',
-        file: 'latest-research-2025.json',
-        category: 'research',
-        lastUpdated: '2025-01-15',
-        payloadCount: 20
-      },
-      {
-        id: 'comprehensive-2025',
-        name: 'Comprehensive Attacks 2025',
-        description: 'Complete database of all known LLM attack vectors including direct/indirect prompt injection, jailbreaks, multi-modal exploits, XSS+prompt injection, CSRF+prompt injection, and other advanced payloads',
-        file: 'comprehensive-attacks-2025.json',
-        category: 'comprehensive',
-        lastUpdated: '2025-01-20',
-        payloadCount: 50
-      }
-    ]
   }
 
   private initializeCategories() {
@@ -378,40 +341,58 @@ export class PayloadManager {
    * Save a new payload to the manager and persist to localStorage
    */
   public savePayload(payload: AttackPayload) {
-    this.payloads.set(payload.id, payload)
+    // Automatically assign failure and success keywords
+    const autoFailureKeywords = DEFAULT_FAILURE_KEYWORDS;
+    const autoSuccessKeywords = extractSuccessKeywords(payload.expectedOutput || payload.payload);
+    const updatedPayload = {
+      ...payload,
+      failureKeywords: autoFailureKeywords,
+      successKeywords: autoSuccessKeywords,
+    };
+    this.payloads.set(updatedPayload.id, updatedPayload)
     // Save only custom (user-created) payloads to localStorage
     const customPayloads = Array.from(this.payloads.values()).filter(p => p.source === 'AI Generated' || p.isEditable)
     localStorage.setItem('customAttackPayloads', JSON.stringify(customPayloads))
+    
+    // Log activity
+    activityLogger.logPayloadCreation(
+      updatedPayload.name,
+      updatedPayload.category || 'unknown'
+    )
   }
 
   /**
-   * Load all payloads from sources and merge in any custom payloads from localStorage
+   * Delete a payload by id and update localStorage for custom payloads
+   */
+  public deletePayload(id: string) {
+    this.payloads.delete(id);
+    // Remove from localStorage if custom
+    const customPayloadsRaw = localStorage.getItem('customAttackPayloads');
+    if (customPayloadsRaw) {
+      try {
+        const customPayloads = JSON.parse(customPayloadsRaw).filter((p: any) => p.id !== id);
+        localStorage.setItem('customAttackPayloads', JSON.stringify(customPayloads));
+      } catch {}
+    }
+  }
+
+  /**
+   * Load all payloads from the single source and merge in any custom payloads from localStorage
    */
   public async loadAllPayloads(): Promise<AttackPayload[]> {
     const allPayloads: AttackPayload[] = []
-    console.log('PayloadManager: Starting to load all payloads...')
-    console.log('PayloadManager: Sources:', this.sources)
-
-    for (const source of this.sources) {
-      try {
-        console.log(`PayloadManager: Loading from source: ${source.name} (${source.file})`)
-        const payloads = await this.loadPayloadsFromSource(source.file)
-        console.log(`PayloadManager: Loaded ${payloads.length} payloads from ${source.name}`)
-        allPayloads.push(...payloads)
-        
-        // Update source with actual payload count
-        source.payloadCount = payloads.length
-      } catch (error) {
-        console.error(`Failed to load payloads from ${source.name}:`, error)
-      }
+    try {
+      const response = await fetch(this.sources[0])
+      if (!response.ok) throw new Error('Failed to load all-attack-payloads.json')
+      const payloads = await response.json()
+      allPayloads.push(...payloads)
+      // Index payloads by ID
+      allPayloads.forEach(payload => {
+        this.payloads.set(payload.id, payload)
+      })
+    } catch (error) {
+      console.error('Failed to load payloads:', error)
     }
-
-    console.log(`PayloadManager: Total payloads loaded: ${allPayloads.length}`)
-
-    // Index payloads by ID
-    allPayloads.forEach(payload => {
-      this.payloads.set(payload.id, payload)
-    })
     // Merge in custom payloads from localStorage
     const customPayloadsRaw = localStorage.getItem('customAttackPayloads')
     if (customPayloadsRaw) {
@@ -425,36 +406,7 @@ export class PayloadManager {
         console.error('Failed to parse customAttackPayloads from localStorage', e)
       }
     }
-
     return Array.from(this.payloads.values())
-  }
-
-  private async loadPayloadsFromSource(filename: string): Promise<AttackPayload[]> {
-    try {
-      console.log(`PayloadManager: Loading payloads from ${filename}`)
-      const response = await fetch(`/assets/payloads/${filename}`)
-      if (!response.ok) {
-        throw new Error(`Failed to load ${filename}: ${response.statusText}`)
-      }
-      
-      const payloads = await response.json()
-      console.log(`PayloadManager: Successfully loaded ${payloads.length} payloads from ${filename}`)
-      
-      return payloads.map((payload: any) => ({
-        ...payload,
-        // Ensure all required fields are present
-        id: payload.id || `generated-${Date.now()}`,
-        name: payload.name || 'Unnamed Payload',
-        description: payload.description || '',
-        category: payload.category || 'unknown',
-        payload: payload.payload || '',
-        tags: payload.tags || [],
-        source: payload.source || 'Unknown'
-      }))
-    } catch (error) {
-      console.error(`PayloadManager: Error loading payloads from ${filename}:`, error)
-      return []
-    }
   }
 
   public getPayloadsByFilter(filter: PayloadFilter): AttackPayload[] {
@@ -466,21 +418,21 @@ export class PayloadManager {
       )
     }
 
-    if (filter.owaspLabels && filter.owaspLabels.length > 0) {
+    if (filter.owasp && filter.owasp.length > 0) {
       filteredPayloads = filteredPayloads.filter(payload =>
-        filter.owaspLabels!.some(label => payload.tags.includes(label))
+        filter.owasp!.some(label => Array.isArray(payload.owasp) && payload.owasp.includes(label))
       )
     }
 
-    if (filter.mitreAtlasLabels && filter.mitreAtlasLabels.length > 0) {
+    if (filter.mitreAtlas && filter.mitreAtlas.length > 0) {
       filteredPayloads = filteredPayloads.filter(payload =>
-        filter.mitreAtlasLabels!.some(label => payload.tags.includes(label))
+        filter.mitreAtlas!.some(label => Array.isArray(payload.mitreAtlas) && payload.mitreAtlas.includes(label))
       )
     }
 
-    if (filter.aiSystemLabels && filter.aiSystemLabels.length > 0) {
+    if (filter.aiSystem && filter.aiSystem.length > 0) {
       filteredPayloads = filteredPayloads.filter(payload =>
-        filter.aiSystemLabels!.some(label => payload.tags.includes(label))
+        filter.aiSystem!.some(label => Array.isArray(payload.aiSystem) && payload.aiSystem.includes(label))
       )
     }
 
@@ -529,19 +481,19 @@ export class PayloadManager {
 
   public getPayloadsByOWASPLabel(owaspLabel: string): AttackPayload[] {
     return Array.from(this.payloads.values()).filter(payload => 
-      payload.owaspLabels && payload.owaspLabels.includes(owaspLabel)
+      payload.owasp && payload.owasp.includes(owaspLabel)
     )
   }
 
   public getPayloadsByMitreAtlasLabel(mitreLabel: string): AttackPayload[] {
     return Array.from(this.payloads.values()).filter(payload => 
-      payload.mitreAtlasLabels && payload.mitreAtlasLabels.includes(mitreLabel)
+      payload.mitreAtlas && payload.mitreAtlas.includes(mitreLabel)
     )
   }
 
   public getPayloadsByAISystemLabel(aiSystemLabel: string): AttackPayload[] {
     return Array.from(this.payloads.values()).filter(payload => 
-      payload.aiSystemLabels && payload.aiSystemLabels.includes(aiSystemLabel)
+      payload.aiSystem && payload.aiSystem.includes(aiSystemLabel)
     )
   }
 
@@ -555,7 +507,7 @@ export class PayloadManager {
     return this.payloads.get(id)
   }
 
-  public getSources(): PayloadSource[] {
+  public getSources(): string[] {
     return this.sources
   }
 
@@ -570,16 +522,30 @@ export class PayloadManager {
   public getPayloadStats() {
     const payloads = Array.from(this.payloads.values())
     
+    // Calculate high success rate and average success rate
+    let highSuccessCount = 0
+    let totalSuccess = 0
+    let counted = 0
+    payloads.forEach(payload => {
+      const sr = (payload as any).successRate
+      if (typeof sr === 'number') {
+        totalSuccess += sr
+        counted++
+        if (sr >= 0.8) highSuccessCount++
+      }
+    })
+    const averageSuccessRate = counted > 0 ? totalSuccess / counted : 0
+
     const stats = {
       total: payloads.length,
-      highSuccessRate: 0,
-      llm01Payloads: payloads.filter(p => p.owaspLabels && p.owaspLabels.includes('LLM01')).length,
+      highSuccessRate: highSuccessCount,
+      llm01Payloads: payloads.filter(p => p.owasp && p.owasp.includes('LLM01')).length,
       byOWASPLabel: {
-        LLM01: payloads.filter(p => p.owaspLabels && p.owaspLabels.includes('LLM01')).length,
-        LLM02: payloads.filter(p => p.owaspLabels && p.owaspLabels.includes('LLM02')).length,
-        LLM03: payloads.filter(p => p.owaspLabels && p.owaspLabels.includes('LLM03')).length,
-        LLM04: payloads.filter(p => p.owaspLabels && p.owaspLabels.includes('LLM04')).length,
-        LLM05: payloads.filter(p => p.owaspLabels && p.owaspLabels.includes('LLM05')).length
+        LLM01: payloads.filter(p => p.owasp && p.owasp.includes('LLM01')).length,
+        LLM02: payloads.filter(p => p.owasp && p.owasp.includes('LLM02')).length,
+        LLM03: payloads.filter(p => p.owasp && p.owasp.includes('LLM03')).length,
+        LLM04: payloads.filter(p => p.owasp && p.owasp.includes('LLM04')).length,
+        LLM05: payloads.filter(p => p.owasp && p.owasp.includes('LLM05')).length
       },
       bySource: {} as Record<string, number>,
       byCategory: {} as Record<string, number>,
@@ -595,7 +561,7 @@ export class PayloadManager {
         'Advanced AI Attacks': payloads.filter(p => ['function-calling', 'memory-injection', 'cross-plugin', 'mcp-injection'].includes(p.category)).length,
         'Research & Emerging': payloads.filter(p => ['adversarial-suffix', 'reasoning-poisoning', 'attention-exploitation', 'constitutional-ai', 'fine-tuning', 'gradient-based', 'transfer-learning', 'backdoor-trigger', 'token-level', 'prompt-infection'].includes(p.category)).length
       },
-      averageSuccessRate: 0
+      averageSuccessRate
     }
 
     // Calculate source distribution

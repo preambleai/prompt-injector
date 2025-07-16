@@ -80,7 +80,19 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // Remove listeners
   removeAllListeners: (channel: string) => {
     ipcRenderer.removeAllListeners(channel)
-  }
+  },
+  
+  // LLM API
+  llmRequest: (request: any) => ipcRenderer.invoke('llm-request', request),
+  makeAIRequest: (request: any) => ipcRenderer.invoke('make-ai-request', request),
+  getAvailableModels: (provider: string, apiKey?: string) => ipcRenderer.invoke('get-available-models', provider, apiKey),
+  testOllamaConnection: () => ipcRenderer.invoke('test-ollama-connection'),
+  executeTest: (model: any, payload: any) => ipcRenderer.invoke('execute-test', model, payload),
+  executeTestSuite: (models: any, payloads: any, config: any) => ipcRenderer.invoke('execute-test-suite', models, payloads, config),
+  loadAttackPayloads: () => ipcRenderer.invoke('load-attack-payloads'),
+  testModelConnection: (model: any) => ipcRenderer.invoke('test-model-connection', model),
+  executeRedTeamAttack: (model: any, attack: any) => ipcRenderer.invoke('execute-red-team-attack', model, attack),
+  executeBenchmarkTest: (model: any, benchmark: any, payload: any) => ipcRenderer.invoke('execute-benchmark-test', model, benchmark, payload),
 })
 
 // Type declaration for the exposed API
@@ -102,6 +114,16 @@ declare global {
       onTestProgress: (callback: (data: { testId: string; result: AttackResult }) => void) => void
       onAttackCompleted: (callback: (result: AttackResult) => void) => void
       removeAllListeners: (channel: string) => void
+      llmRequest: (request: any) => Promise<any>
+      makeAIRequest: (request: any) => Promise<any>
+      getAvailableModels: (provider: string, apiKey?: string) => Promise<any>
+      testOllamaConnection: () => Promise<boolean>
+      executeTest: (model: any, payload: any) => Promise<any>
+      executeTestSuite: (models: any, payloads: any, config: any) => Promise<any>
+      loadAttackPayloads: () => Promise<any>
+      testModelConnection: (model: any) => Promise<any>
+      executeRedTeamAttack: (model: any, attack: any) => Promise<any>
+      executeBenchmarkTest: (model: any, benchmark: any, payload: any) => Promise<any>
     }
   }
 } 

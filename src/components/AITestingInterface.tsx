@@ -11,7 +11,18 @@ import {
   TestTube,
   AlertTriangle
 } from 'lucide-react'
-import { aiAPIIntegration, AIRequest, AIResponse, AIError } from '../services/ai-api-integration'
+import type { AIRequest, AIResponse, AIError } from '../types';
+
+const aiAPIIntegration = {
+  makeRequest: async (request: AIRequest): Promise<AIResponse> => {
+    if (window.electronAPI && window.electronAPI.llmRequest) {
+      return await window.electronAPI.llmRequest(request);
+    }
+    throw new Error('Electron LLM bridge not available');
+  },
+  testOllamaConnection: async () => false,
+  getAvailableModels: async () => [],
+};
 
 interface AITestingInterfaceProps {
   onTestComplete?: (results: AIResponse[]) => void
@@ -75,49 +86,36 @@ const AITestingInterface: React.FC<AITestingInterfaceProps> = ({ onTestComplete 
 
   const loadAvailableModels = async () => {
     try {
-      const models = await aiAPIIntegration.getAvailableModels('ollama')
-      const modelNames = models.map(model => model.name)
-      setAvailableModels(modelNames)
-      
+      const models: { name: string }[] = await aiAPIIntegration.getAvailableModels('ollama');
+      const modelNames = models.map(model => model.name);
+      setAvailableModels(modelNames);
       // Set default model if available
       if (modelNames.length > 0) {
-        const defaultModel = modelNames.find(name => name.includes('phi4')) || modelNames[0]
-        setSelectedModel(defaultModel)
+        const found = modelNames.find((name: string) => typeof name === 'string' && name.includes('phi4'));
+        const defaultModel = found ? found : modelNames[0];
+        setSelectedModel(defaultModel);
       }
     } catch (error) {
-      console.error('Error loading available models:', error)
+      console.error('Error loading available models:', error);
       // Set fallback models
-      setAvailableModels(['phi4:latest', 'phi4-mini:3.8b', 'qwen3:1.7b'])
+      setAvailableModels(['phi4:latest', 'phi4-mini:3.8b', 'qwen3:1.7b']);
     }
-  }
+  };
 
   const handleSendMessage = async () => {
-    if (!ollamaStatus) {
-      alert('Ollama is not available. Please start Ollama with "ollama serve"')
-      return
-    }
-
-    if (!selectedModel || !prompt.trim()) {
-      alert('Please select a model and enter a prompt')
-      return
-    }
-
-    setIsLoading(true)
-    const startTime = Date.now()
-
+    setIsLoading(true);
+    const startTime = Date.now();
     try {
       const aiRequest: AIRequest = {
-        provider: 'ollama',
+        provider: 'ollama', // or use selected provider if dynamic
         model: selectedModel,
         prompt: prompt,
         maxTokens: maxTokens,
         temperature: temperature,
         systemPrompt: systemPrompt || undefined
-      }
-
-      const response = await aiAPIIntegration.makeRequest(aiRequest)
-      const duration = Date.now() - startTime
-
+      };
+      const response = await aiAPIIntegration.makeRequest(aiRequest);
+      const duration = Date.now() - startTime;
       const testResult: TestResult = {
         id: `test-${Date.now()}`,
         request: aiRequest,
@@ -125,17 +123,13 @@ const AITestingInterface: React.FC<AITestingInterfaceProps> = ({ onTestComplete 
         error: null,
         timestamp: new Date().toISOString(),
         duration
-      }
-
-      setTestResults(prev => [testResult, ...prev])
-      onTestComplete?.([response])
-      
-      // Clear prompt after successful test
-      setPrompt('')
+      };
+      setTestResults(prev => [testResult, ...prev]);
+      onTestComplete?.([response]);
+      setPrompt('');
     } catch (error) {
-      const duration = Date.now() - startTime
-      const aiError = error as AIError
-
+      const duration = Date.now() - startTime;
+      const aiError = error as AIError;
       const testResult: TestResult = {
         id: `test-${Date.now()}`,
         request: {
@@ -147,13 +141,12 @@ const AITestingInterface: React.FC<AITestingInterfaceProps> = ({ onTestComplete 
         error: aiError,
         timestamp: new Date().toISOString(),
         duration
-      }
-
-      setTestResults(prev => [testResult, ...prev])
+      };
+      setTestResults(prev => [testResult, ...prev]);
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   const handleSecurityTest = async (testPrompt: typeof securityTestPrompts[0]) => {
     setPrompt(testPrompt.prompt)

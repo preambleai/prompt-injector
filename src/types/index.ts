@@ -3,26 +3,34 @@ export interface AttackPayload {
   name: string
   nameUrl?: string
   description: string
-  category: string
+  category?: string // Made optional to match all payloads
   payload: string
-  severity?: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL'
   tags: string[]
   source: string
+  severity?: string // Made optional to match all payloads
   // OWASP LLM01 labels
-  owaspLabels?: string[]
+  owasp?: string[]
   // MITRE ATLAS labels
-  mitreAtlasLabels?: string[]
+  mitreAtlas?: string[]
   // AI system/component specific labels
-  aiSystemLabels?: string[]
+  aiSystem?: string[]
   // Technical details
   technique?: string
   successRate?: number
   bypassMethods?: string[]
-  // Editing capabilities
   isEditable?: boolean
   version?: string
   lastModified?: string
   createdBy?: string
+  expectedOutput?: string
+  /**
+   * List of keywords or phrases that indicate a successful attack if present in the model output
+   */
+  successIndicators?: string[]
+  /**
+   * List of keywords or phrases that indicate the model refused or blocked the attack
+   */
+  failureIndicators?: string[]
 }
 
 export interface AIModel {
@@ -33,6 +41,7 @@ export interface AIModel {
   apiKey?: string
   model: string
   enabled: boolean
+  defaultForPayloads?: boolean // If true, this model is used for payload creation/mutation
 }
 
 export interface TestResult {
@@ -263,4 +272,39 @@ export const TECHNICAL_ARCHITECTURE_OPTIONS = [
   { key: 'llm', label: 'LLM / AI Model' },
   { key: 'single_agent', label: 'Single Agent' },
   { key: 'multi_agent', label: 'Multi-Agent System' },
-] 
+]
+
+export interface AIRequest {
+  provider: string;
+  model: string;
+  prompt: string;
+  maxTokens?: number;
+  temperature?: number;
+  systemPrompt?: string;
+  stream?: boolean;
+  metadata?: Record<string, any>;
+}
+
+export interface AIResponse {
+  content: string;
+  usage: {
+    promptTokens: number;
+    completionTokens: number;
+    totalTokens: number;
+  };
+  model: string;
+  provider: string;
+  finishReason: string;
+  reasoningContent?: string;
+  thinkingBlocks?: string[];
+}
+
+export interface AIError {
+  message: string;
+  code?: string;
+  status?: number;
+  rateLimitInfo?: {
+    resetTime: number;
+    remaining: number;
+  };
+} 

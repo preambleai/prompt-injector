@@ -342,36 +342,10 @@ export const executeBenchmarkTest = async (
   benchmark: Benchmark,
   payload: BenchmarkPayload
 ): Promise<BenchmarkResult> => {
-  // Create attack payload for benchmark testing
-  const attackPayload: AttackPayload = {
-    id: payload.id,
-    name: payload.name,
-    description: payload.description,
-    category: payload.category,
-    payload: payload.payload,
-    severity: payload.severity,
-    tags: payload.tags,
-    source: `benchmark-${benchmark.id}`
+  if (typeof window !== 'undefined' && window.electronAPI && window.electronAPI.executeBenchmarkTest) {
+    return await window.electronAPI.executeBenchmarkTest(model, benchmark, payload);
   }
-  
-  // Use the existing attack engine
-  const { executeTest } = await import('./attack-engine')
-  const result = await executeTest(model, attackPayload)
-  
-  // Calculate benchmark-specific metrics
-  const actualOutcome = result.vulnerability ? 'success' : 'failure'
-  const score = calculateBenchmarkScore(result, payload)
-  const performance = calculatePerformanceMetrics(result, payload)
-  
-  return {
-    ...result,
-    benchmarkId: benchmark.id,
-    metricName: getMetricName(payload),
-    expectedOutcome: payload.expectedOutcome,
-    actualOutcome,
-    score,
-    performance
-  }
+  return Promise.reject(new Error('executeBenchmarkTest is only available in Electron.'));
 }
 
 // Calculate benchmark score

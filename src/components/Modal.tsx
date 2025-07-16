@@ -3,7 +3,7 @@ import React, { useEffect } from 'react';
 interface ModalProps {
   isOpen: boolean;
   onClose: () => void;
-  title?: string;
+  title?: React.ReactNode;
   children: React.ReactNode;
   width?: string;
 }
@@ -22,19 +22,19 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children, width =
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
       aria-modal="true"
       role="dialog"
       tabIndex={-1}
       onClick={onClose}
     >
       <div
-        className={`relative bg-gray-900 text-white rounded-xl shadow-xl p-8 ${width} w-full mx-4`}
+        className={`relative bg-white rounded-2xl shadow-strong p-8 ${width} w-full mx-4`}
         onClick={e => e.stopPropagation()}
         role="document"
       >
         <button
-          className="absolute top-4 right-4 text-gray-400 hover:text-white focus:outline-none"
+          className="absolute top-4 right-4 text-[#1F2C6D]/50 hover:text-[#1F2C6D] focus:outline-none transition-colors"
           onClick={onClose}
           aria-label="Close modal"
         >
@@ -42,7 +42,7 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children, width =
             <path stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" d="M6 6l12 12M6 18L18 6" />
           </svg>
         </button>
-        {title && <h2 className="text-2xl font-bold mb-4">{title}</h2>}
+        {title && <h2 className="text-2xl font-bold mb-6 text-[#081423]">{title}</h2>}
         <div>{children}</div>
       </div>
     </div>

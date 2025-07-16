@@ -54,7 +54,6 @@ import {
   Edit
 } from 'lucide-react'
 import { AttackPayload, AIModel, TestResult, TestConfiguration } from '../types'
-import { loadAttackPayloads, executeTestSuite } from '../services/attack-engine'
 import { loadModels, saveModels, testModelConnection } from '../services/model-manager'
 import MCPTestingWizard from '../components/MCPTestingWizard'
 
@@ -92,7 +91,7 @@ const MCPAgentTesting: React.FC = () => {
     setIsLoading(true)
     try {
       const [payloadsData, modelsData] = await Promise.all([
-        loadAttackPayloads(),
+        window.electronAPI.loadAttackPayloads(),
         Promise.resolve(loadModels())
       ])
       setPayloads(payloadsData)
@@ -152,8 +151,12 @@ const MCPAgentTesting: React.FC = () => {
         timeout: configuration.timeout
       }
 
-      const testResults = await executeTestSuite(selectedModelsData, selectedPayloadsData, testConfig)
-      setResults(testResults)
+      if (window.electronAPI && window.electronAPI.executeTestSuite) {
+        const testResults = await window.electronAPI.executeTestSuite(selectedModelsData, selectedPayloadsData, testConfig)
+        setResults(testResults)
+      } else {
+        alert('Test execution failed: Electron API not available.')
+      }
     } catch (error) {
       console.error('Test execution failed:', error)
       alert('Test execution failed. Please check your configuration.')

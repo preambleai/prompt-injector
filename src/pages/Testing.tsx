@@ -31,7 +31,6 @@ import {
   DollarSign
 } from 'lucide-react'
 import { AttackPayload, AIModel, TestResult } from '../types'
-import { loadAttackPayloads, executeTestSuite } from '../services/attack-engine'
 import { loadModels, testModelConnection } from '../services/model-manager'
 
 interface BusinessContext {
@@ -206,7 +205,7 @@ const Testing: React.FC = () => {
   const loadData = async () => {
     try {
       const [payloadsData, modelsData] = await Promise.all([
-        loadAttackPayloads(),
+        window.electronAPI.loadAttackPayloads(),
         Promise.resolve(loadModels())
       ])
       setPayloads(payloadsData)
@@ -273,7 +272,7 @@ const Testing: React.FC = () => {
         
         const selectedPayloadsData = payloads.filter(p => selectedPayloads.includes(p.id))
         
-        testResults = await executeTestSuite(selectedModelsData, selectedPayloadsData, {
+        testResults = await window.electronAPI.executeTestSuite(selectedModelsData, selectedPayloadsData, {
           selectedModels: selectedModels,
           selectedPayloads: selectedPayloads,
           maxConcurrent: 5,

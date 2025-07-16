@@ -13,13 +13,20 @@ export default defineConfig({
       '@/utils': path.resolve(__dirname, './src/utils'),
       '@/types': path.resolve(__dirname, './src/types'),
       '@/services': path.resolve(__dirname, './src/services'),
-      '@/store': path.resolve(__dirname, './src/store')
+      '@/store': path.resolve(__dirname, './src/store'),
+      'litellm': path.resolve(__dirname, './__DO_NOT_IMPORT_LITELLM__'),
+      'cohere-ai': path.resolve(__dirname, './__DO_NOT_IMPORT_COHERE_AI__'),
+      'src/services/ai-api-integration.ts': path.resolve(__dirname, './__DO_NOT_IMPORT_AI_API_INTEGRATION__')
     }
+  },
+  optimizeDeps: {
+    exclude: ['litellm', 'cohere-ai', 'src/services/ai-api-integration.ts'],
   },
   build: {
     outDir: 'dist',
     sourcemap: true,
     rollupOptions: {
+      external: ['litellm', 'cohere-ai', 'src/services/ai-api-integration.ts'],
       output: {
         manualChunks: {
           vendor: ['react', 'react-dom'],
@@ -32,7 +39,7 @@ export default defineConfig({
   },
   server: {
     port: 3000,
-    host: true
+    host: true,
   },
   preview: {
     port: 4173,

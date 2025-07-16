@@ -6,7 +6,7 @@
  * Unauthorized copying or distribution of this file is prohibited.
  */
 
-import React from 'react'
+import React, { useEffect } from 'react'
 import { Routes, Route } from 'react-router-dom'
 import Layout from './components/Layout'
 import ErrorBoundary from './components/ErrorBoundary'
@@ -15,8 +15,14 @@ import Assessment from './pages/Assessment'
 import AdaptivePayloads from './pages/AdaptivePayloads'
 import Settings from './pages/Settings'
 import TestHistory from './pages/TestHistory'
+import { activityLogger } from './services/activity-logger'
 
 function App() {
+  useEffect(() => {
+    // Initialize activity logger with seed data if needed
+    activityLogger.seedInitialActivities()
+  }, [])
+
   return (
     <ErrorBoundary>
       <Layout>

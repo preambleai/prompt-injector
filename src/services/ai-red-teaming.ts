@@ -136,31 +136,10 @@ export const executeRedTeamAttack = async (
   model: AIModel,
   attack: RedTeamAttack
 ): Promise<RedTeamResult> => {
-  // Use the existing attack engine to execute the attack
-  const { executeTest } = await import('./attack-engine')
-  
-  const attackPayload: AttackPayload = {
-    id: attack.id,
-    name: attack.name,
-    description: attack.description,
-    category: attack.category,
-    payload: attack.payload,
-    tags: [attack.category],
-    source: 'red-team'
+  if (typeof window !== 'undefined' && window.electronAPI && window.electronAPI.executeRedTeamAttack) {
+    return await window.electronAPI.executeRedTeamAttack(model, attack);
   }
-  
-  const result = await executeTest(model, attackPayload)
-  
-  // Analyze response for extraction attempts
-  const extractionAttempt = analyzeExtractionAttempt(result.response, attack)
-  const extractedInfo = extractInformation(result.response, attack)
-  
-  return {
-    ...result,
-    attackType: attack.category,
-    extractionAttempt,
-    extractedInfo
-  }
+  return Promise.reject(new Error('executeRedTeamAttack is only available in Electron.'));
 }
 
 // Analyze if the response indicates successful extraction
