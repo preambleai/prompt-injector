@@ -43,9 +43,6 @@ jobs:
         
     - name: Install dependencies
       run: |
-        # Remove problematic dependencies first
-        npm pkg delete dependencies.onnxruntime-node || true
-        
         # Install with better error handling
         npm ci --prefer-offline --no-audit || {
           echo "First install failed, trying with legacy peer deps..."
