@@ -58,7 +58,24 @@ Prompt Injector is an open-source desktop application for AI security testing, d
 
 ## 🚀 Quick Start
 
-> **Prerequisites**: To run security tests, you need either [Ollama](https://ollama.com/) installed for local models, or valid API keys for supported providers (OpenAI, Anthropic, Google Gemini, or xAI Grok). Configure providers in the app's Settings page.
+### AI Provider Setup
+
+**Choose your AI provider** before running security tests:
+
+#### Option A: Local Models (Free) - Ollama
+1. **Install Ollama**: Download from [ollama.com](https://ollama.com/)
+2. **Start Ollama service**: `ollama serve`
+3. **Install a model**: `ollama pull phi4:latest` (or `llama2`, `mistral`, etc.)
+4. **Configure in app**: No API key required - works automatically
+
+#### Option B: Cloud APIs (Paid) 
+Get API keys from one or more providers:
+- [OpenAI](https://platform.openai.com/api-keys) (GPT-4, GPT-3.5)
+- [Anthropic](https://console.anthropic.com/) (Claude models)
+- [Google AI](https://makersuite.google.com/app/apikey) (Gemini models)
+- [xAI](https://console.x.ai/) (Grok models)
+
+Configure API keys in the app's Settings page after installation.
 
 ### Installation
 
