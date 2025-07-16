@@ -19,6 +19,7 @@
     "dist:win": "npm run build && electron-builder --win",
     "dist:mac": "npm run build && electron-builder --mac",
     "dist:linux": "npm run build && electron-builder --linux",
+    "release": "node scripts/create-release.js",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:e2e": "cypress run",
