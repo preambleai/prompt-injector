@@ -405,3 +405,28 @@ Special thanks to:
 **Prompt Injector** - Advanced AI Security Testing Platform by Preamble, Inc.
 
 *Building the future of AI security, one test at a time.* 
+
+## 🛡️ macOS: Troubleshooting "App is Damaged and Can't Be Opened"
+
+If you see the error "Prompt Injector.app is damaged and can’t be opened. You should move it to the Trash." when opening the DMG on macOS, follow these steps:
+
+1. **Right-click Method (Recommended):**
+   - Right-click (or Control-click) on `Prompt Injector.app` in your Applications folder.
+   - Select **"Open"** from the context menu.
+   - In the dialog, click **"Open"** again. The app should now launch and be trusted for future use.
+
+2. **Remove Quarantine Attribute (Terminal):**
+   - Open Terminal (Applications → Utilities → Terminal)
+   - Run:
+     ```bash
+     xattr -d com.apple.quarantine "/Applications/Prompt Injector.app"
+     ```
+   - Try opening the app again.
+
+3. **System Settings Override:**
+   - **Ventura/Sonoma:** Go to **System Settings → Privacy & Security → Developer Tools**. Add the app.
+   - **Monterey/Big Sur/Catalina:** Go to **System Preferences → Security & Privacy**. Click the lock, then "Open Anyway" if it appears.
+
+> These steps are required for unsigned, open-source Electron apps distributed outside the Mac App Store. This is a security warning, not a real corruption.
+
+--- 
