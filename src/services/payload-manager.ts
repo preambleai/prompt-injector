@@ -382,9 +382,16 @@ export class PayloadManager {
   public async loadAllPayloads(): Promise<AttackPayload[]> {
     const allPayloads: AttackPayload[] = []
     try {
-      const response = await fetch(this.sources[0])
-      if (!response.ok) throw new Error('Failed to load all-attack-payloads.json')
-      const payloads = await response.json()
+      let payloads: AttackPayload[] = [];
+      if (window.electronAPI && typeof window.electronAPI.getAttackPayloads === 'function') {
+        // Electron production: use IPC
+        payloads = await window.electronAPI.getAttackPayloads();
+      } else {
+        // Dev mode: use fetch
+        const response = await fetch(this.sources[0])
+        if (!response.ok) throw new Error('Failed to load all-attack-payloads.json')
+        payloads = await response.json()
+      }
       allPayloads.push(...payloads)
       // Index payloads by ID
       allPayloads.forEach(payload => {

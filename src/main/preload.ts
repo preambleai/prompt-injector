@@ -93,6 +93,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   testModelConnection: (model: any) => ipcRenderer.invoke('test-model-connection', model),
   executeRedTeamAttack: (model: any, attack: any) => ipcRenderer.invoke('execute-red-team-attack', model, attack),
   executeBenchmarkTest: (model: any, benchmark: any, payload: any) => ipcRenderer.invoke('execute-benchmark-test', model, benchmark, payload),
+  getAttackPayloads: () => ipcRenderer.invoke('get-attack-payloads'),
 })
 
 // Type declaration for the exposed API
@@ -124,6 +125,7 @@ declare global {
       testModelConnection: (model: any) => Promise<any>
       executeRedTeamAttack: (model: any, attack: any) => Promise<any>
       executeBenchmarkTest: (model: any, benchmark: any, payload: any) => Promise<any>
+      getAttackPayloads: () => Promise<AttackPayload[]>
     }
   }
 } 

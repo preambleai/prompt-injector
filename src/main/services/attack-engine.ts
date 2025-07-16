@@ -8,16 +8,18 @@ import { AIRequest } from '../../types';
 // Import attack payloads with proper path resolution for packaged apps
 const getPayloadsPath = () => {
   if (app.isPackaged) {
-    // In packaged app, use the resources directory
-    return path.join(process.resourcesPath, 'app.asar', 'public/assets/payloads/all-attack-payloads.json')
+    // In packaged app, use the asar path
+    return path.join(process.resourcesPath, 'app.asar', 'public', 'assets', 'payloads', 'all-attack-payloads.json');
   } else {
     // In development, use the normal path
-    return path.join(__dirname, '../../../public/assets/payloads/all-attack-payloads.json')
+    return path.join(__dirname, '../../../public/assets/payloads/all-attack-payloads.json');
   }
 }
 
-const payloadsPath = getPayloadsPath()
-const attackPayloads = JSON.parse(fs.readFileSync(payloadsPath, 'utf8'))
+const payloadsPath = getPayloadsPath();
+console.log('Payloads path:', payloadsPath);
+console.log('Exists:', fs.existsSync(payloadsPath));
+const attackPayloads = JSON.parse(fs.readFileSync(payloadsPath, 'utf8'));
 
 export interface AttackPayload {
   id: string
@@ -293,5 +295,9 @@ export class AttackEngine extends EventEmitter {
     ipcMain.handle('get-test', (_event, testId: string) => {
       return this.tests.get(testId)
     })
+
+    ipcMain.handle('get-attack-payloads', async () => {
+      return attackPayloads;
+    });
   }
 } 
