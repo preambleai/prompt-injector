@@ -1,6 +1,6 @@
 {
   "name": "prompt-injector",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Cutting-edge AI Security Testing Platform for Prompt Injection Detection and Defense",
   "main": "dist/main/main.js",
   "homepage": "./",
