@@ -12,10 +12,10 @@ import aiAPIIntegration from '../services/ai-api-integration';
 import { AttackEngine } from './services/attack-engine';
 
 // Set development environment properly
-const isDev = process.env.NODE_ENV === 'development' || !app.isPackaged
+const isDev = process.env['NODE_ENV'] === 'development' || !app.isPackaged
 
 console.log('Electron main process starting...')
-console.log('NODE_ENV:', process.env.NODE_ENV)
+console.log('NODE_ENV:', process.env['NODE_ENV'])
 console.log('app.isPackaged:', app.isPackaged)
 console.log('isDev:', isDev)
 
