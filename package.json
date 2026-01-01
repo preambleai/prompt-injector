@@ -152,7 +152,7 @@
     "pgvector": "^0.2.0",
     "proxy-addr": "^2.0.7",
     "punycode": "^2.3.1",
-    "qs": "^6.11.2",
+    "qs": "^6.14.1",
     "querystring-es3": "^0.2.1",
     "range-parser": "^1.2.1",
     "raw-body": "^2.5.2",
