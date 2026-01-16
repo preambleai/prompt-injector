@@ -166,7 +166,7 @@
     "recharts": "^2.7.0",
     "redis": "^4.6.0",
     "safe-buffer": "^5.2.1",
-    "send": "^0.18.0",
+    "send": "^0.19.0",
     "sequelize": "^6.32.0",
     "sequelize-cli": "^6.6.0",
     "serve-static": "^1.15.0",
